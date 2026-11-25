@@ -104,3 +104,17 @@ fn scan_does_not_execute_anything() {
         .code(0);
     assert!(!Path::new(&marker).exists(), "scanned command was executed");
 }
+
+#[test]
+fn json_output_is_byte_identical_across_runs() {
+    let a = bin()
+        .args(["scan", "fixtures/demo", "--format", "json"])
+        .output()
+        .unwrap();
+    let b = bin()
+        .args(["scan", "fixtures/demo", "--format", "json"])
+        .output()
+        .unwrap();
+    assert_eq!(a.status.code(), Some(2));
+    assert_eq!(a.stdout, b.stdout);
+}
