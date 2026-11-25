@@ -1,5 +1,6 @@
 //! The rule registry. Rules are pure functions over one [`ServerSpec`].
 
+pub mod exfil;
 pub mod scope;
 pub mod secret;
 pub mod tool;
@@ -48,6 +49,7 @@ impl Default for RuleCtx {
 }
 
 static RULES: &[Rule] = &[
+    exfil::mcp_exfil_path(),
     scope::mcp_scope_admin(),
     scope::mcp_scope_wildcard(),
     scope::mcp_scope_write_when_read(),
