@@ -1,0 +1,1 @@
+{"mcpServers":{"s":{"command":"npx","args":["-y","some-server"],"env":{"GITHUB_SCOPES":"repo"}}}}

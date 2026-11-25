@@ -1,0 +1,8 @@
+{
+  "findings": [
+    {
+      "rule_id": "mcp-scope-write-when-read",
+      "severity": "medium"
+    }
+  ]
+}

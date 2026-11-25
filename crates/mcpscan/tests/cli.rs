@@ -153,3 +153,17 @@ fn output_file_only_changes_where_the_report_goes() {
     let text = std::fs::read_to_string(&out).unwrap();
     assert!(text.contains("mcp-secret-literal"));
 }
+
+#[test]
+fn sarif_format_is_valid_and_keeps_the_exit_code() {
+    let out = bin()
+        .args(["scan", "fixtures/demo", "--format", "sarif"])
+        .output()
+        .unwrap();
+    assert_eq!(out.status.code(), Some(2));
+    let text = String::from_utf8_lossy(&out.stdout);
+    let document: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(document["version"], "2.1.0");
+    assert_eq!(document["runs"][0]["tool"]["driver"]["name"], "mcpscan");
+    assert!(text.contains("mcp-secret-literal"));
+}

@@ -64,6 +64,9 @@ fn run_scan(args: cli::ScanArgs) -> Result<ExitCode, String> {
     let rendered = match args.format {
         Format::Human => report::human::render(&report),
         Format::Json => report::json::render(&report).map_err(|e| e.to_string())?,
+        Format::Sarif => {
+            report::sarif::render(&report, env!("CARGO_PKG_VERSION")).map_err(|e| e.to_string())?
+        }
         other => {
             return Err(format!(
                 "--format {} is not implemented in this build",

@@ -1,0 +1,8 @@
+{
+  "findings": [
+    {
+      "rule_id": "mcp-exfil-path",
+      "severity": "high"
+    }
+  ]
+}

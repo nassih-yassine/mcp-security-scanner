@@ -14,3 +14,6 @@ sha2 = "0.11"
 jsonc-parser = { version = "0.26", features = ["serde"] }
 toml_edit = "0.23"
 thiserror = "2"
+
+[dev-dependencies]
+jsonschema = "0.30"
