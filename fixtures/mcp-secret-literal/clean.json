@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "s": {
+      "command": "npx",
+      "args": ["-y", "some-server"],
+      "env": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 //! The rule registry. Rules are pure functions over one [`ServerSpec`].
 
+pub mod secret;
+
 use crate::model::{Confidence, Finding, ServerSpec};
 use std::path::PathBuf;
 
@@ -43,7 +45,7 @@ impl Default for RuleCtx {
     }
 }
 
-static RULES: &[Rule] = &[];
+static RULES: &[Rule] = &[secret::mcp_secret_entropy(), secret::mcp_secret_literal()];
 
 /// Every registered rule, in id order.
 pub fn registry() -> &'static [Rule] {

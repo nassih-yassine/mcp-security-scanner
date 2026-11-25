@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "s": {
+      "command": "npx",
+      "args": ["-y", "some-server"],
+      "env": { "SERVICE_VALUE": "us-east-1" }
+    }
+  }
+}

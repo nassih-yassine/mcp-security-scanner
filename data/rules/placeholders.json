@@ -1,0 +1,5 @@
+[
+  "${", "op://", "file://", "env:", "keepass://", "vault://",
+  "your_", "your-", "<", ">", "changeme", "change-me", "xxxx",
+  "***", "example", "dummy", "placeholder", "redacted", "insert-", "todo"
+]

@@ -80,6 +80,8 @@ pub enum ConfigFormat {
     Jsonc,
     /// TOML.
     Toml,
+    /// A `KEY=VALUE` file: `.env` or a shell history.
+    Env,
 }
 
 /// Package registry a server package comes from.

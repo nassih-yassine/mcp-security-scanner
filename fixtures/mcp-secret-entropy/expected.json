@@ -1,0 +1,10 @@
+{
+  "findings": [
+    {
+      "rule_id": "mcp-secret-entropy",
+      "severity": "high",
+      "confidence": "medium",
+      "pointer": "/mcpServers/s/env/SERVICE_VALUE"
+    }
+  ]
+}
