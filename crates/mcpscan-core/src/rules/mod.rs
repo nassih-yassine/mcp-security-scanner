@@ -1,5 +1,6 @@
 //! The rule registry. Rules are pure functions over one [`ServerSpec`].
 
+pub mod scope;
 pub mod secret;
 pub mod tool;
 
@@ -47,6 +48,9 @@ impl Default for RuleCtx {
 }
 
 static RULES: &[Rule] = &[
+    scope::mcp_scope_admin(),
+    scope::mcp_scope_wildcard(),
+    scope::mcp_scope_write_when_read(),
     secret::mcp_secret_entropy(),
     secret::mcp_secret_literal(),
     tool::mcp_tool_injection(),

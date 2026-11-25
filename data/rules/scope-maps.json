@@ -1,0 +1,53 @@
+{
+  "github": {
+    "read_only": ["public_repo", "read:org", "read:user", "issues:read", "contents:read", "packages:read"],
+    "read_equivalent": {
+      "repo": "public_repo",
+      "contents:write": "contents:read",
+      "issues:write": "issues:read",
+      "packages:write": "packages:read",
+      "pull_requests:write": "pull_requests:read"
+    },
+    "admin": ["admin", "delete_repo", "site_admin", "repo:admin"]
+  },
+  "stripe": {
+    "read_only": ["read_only"],
+    "read_equivalent": { "write": "read_only", "read_write": "read_only" },
+    "admin": ["admin"]
+  },
+  "supabase": {
+    "read_only": ["read_only"],
+    "read_equivalent": { "read_write": "read_only", "write": "read_only" },
+    "admin": ["admin", "postgres_admin", "service_role"]
+  },
+  "google": {
+    "read_only": [
+      "https://www.googleapis.com/auth/drive.readonly",
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/calendar.readonly"
+    ],
+    "read_equivalent": {
+      "https://www.googleapis.com/auth/drive": "https://www.googleapis.com/auth/drive.readonly",
+      "https://www.googleapis.com/auth/gmail.modify": "https://www.googleapis.com/auth/gmail.readonly"
+    },
+    "admin": [
+      "https://www.googleapis.com/auth/cloud-platform",
+      "https://www.googleapis.com/auth/admin.directory.user"
+    ]
+  },
+  "slack": {
+    "read_only": ["channels:history", "channels:read", "users:read"],
+    "read_equivalent": { "chat:write": "channels:read" },
+    "admin": ["admin"]
+  },
+  "notion": {
+    "read_only": ["read_content"],
+    "read_equivalent": { "insert_content": "read_content", "update_content": "read_content" },
+    "admin": ["admin"]
+  },
+  "linear": {
+    "read_only": ["read"],
+    "read_equivalent": { "write": "read" },
+    "admin": ["admin"]
+  }
+}
