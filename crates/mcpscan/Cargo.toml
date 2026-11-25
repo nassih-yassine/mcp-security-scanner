@@ -1,0 +1,15 @@
+[package]
+name = "mcpscan"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Scan MCP servers, agent configs and tool definitions for security issues"
+
+[[bin]]
+name = "mcpscan"
+path = "src/main.rs"
+
+[dependencies]
+mcpscan-core = { path = "../mcpscan-core" }
