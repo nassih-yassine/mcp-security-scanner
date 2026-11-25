@@ -4,3 +4,5 @@
 //! never executes a scanned server and never fetches a scanned URL.
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+
+pub mod model;
