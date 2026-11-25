@@ -10,3 +10,5 @@ pub mod model;
 pub mod parse;
 
 pub mod discover;
+
+pub mod resolve;
