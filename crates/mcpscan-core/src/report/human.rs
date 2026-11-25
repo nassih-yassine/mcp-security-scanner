@@ -30,10 +30,7 @@ pub fn render(report: &ScanReport) -> String {
             .span
             .map(|s| format!(":{}:{}", s.start_line, s.start_col))
             .unwrap_or_default();
-        out.push_str(&format!(
-            "    at {}{}\n",
-            finding.location.pointer, span
-        ));
+        out.push_str(&format!("    at {}{}\n", finding.location.pointer, span));
         if let Some(evidence) = &finding.evidence {
             out.push_str(&format!("    evidence: {}\n", evidence.redacted));
         }

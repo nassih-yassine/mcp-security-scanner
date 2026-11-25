@@ -15,8 +15,8 @@ pub mod discover;
 
 pub mod resolve;
 
-pub mod rules;
 pub mod report;
+pub mod rules;
 pub mod scan;
 
 pub mod score;

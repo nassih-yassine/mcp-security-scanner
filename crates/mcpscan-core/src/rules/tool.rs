@@ -15,9 +15,10 @@ struct Phrase {
 fn phrases() -> &'static [(String, Regex)] {
     static PHRASES: OnceLock<Vec<(String, Regex)>> = OnceLock::new();
     PHRASES.get_or_init(|| {
-        let raw: Vec<Phrase> =
-            serde_json::from_str(include_str!("../../../../data/rules/injection-phrases.json"))
-                .expect("injection-phrases.json is embedded and valid");
+        let raw: Vec<Phrase> = serde_json::from_str(include_str!(
+            "../../../../data/rules/injection-phrases.json"
+        ))
+        .expect("injection-phrases.json is embedded and valid");
         raw.into_iter()
             .filter_map(|p| Regex::new(&p.pattern).ok().map(|re| (p.id, re)))
             .collect()
@@ -47,7 +48,13 @@ fn tools_for(spec: &ServerSpec, ctx: &RuleCtx) -> Vec<ToolSpec> {
     let safe: String = spec
         .name
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
     let Ok(text) = std::fs::read_to_string(dir.join(format!("{safe}.json"))) else {
         return Vec::new();
@@ -178,23 +185,26 @@ fn run_shadowing(spec: &ServerSpec, ctx: &RuleCtx) -> Vec<Finding> {
     let tools = tools_for(spec, ctx);
     let mut out = Vec::new();
     for tool in &tools {
-        for other in tools.iter().filter(|o| o.name != tool.name && o.name.len() >= 4) {
+        for other in tools
+            .iter()
+            .filter(|o| o.name != tool.name && o.name.len() >= 4)
+        {
             let pattern = format!(r"(?i)\b{}\b", regex::escape(&other.name));
-            if let Ok(re) = Regex::new(&pattern) {
-                if re.is_match(&tool.description) {
-                    out.push(Finding::new(
-                        "mcp-tool-shadowing",
-                        Severity::Medium,
-                        Confidence::Medium,
-                        format!(
-                            "tool `{}` description names sibling tool `{}`",
-                            tool.name, other.name
-                        ),
-                        location(spec, tool),
-                        Some(evidence(&tool.description)),
-                        "Remove the cross-reference; treat a server that ships it as untrusted.",
-                    ));
-                }
+            if let Ok(re) = Regex::new(&pattern)
+                && re.is_match(&tool.description)
+            {
+                out.push(Finding::new(
+                    "mcp-tool-shadowing",
+                    Severity::Medium,
+                    Confidence::Medium,
+                    format!(
+                        "tool `{}` description names sibling tool `{}`",
+                        tool.name, other.name
+                    ),
+                    location(spec, tool),
+                    Some(evidence(&tool.description)),
+                    "Remove the cross-reference; treat a server that ships it as untrusted.",
+                ));
             }
         }
     }
@@ -260,9 +270,7 @@ pub const fn mcp_tool_shadowing() -> Rule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{
-        Capabilities, ConfigFormat, ServerSpec, Source, ToolSpec, Transport,
-    };
+    use crate::model::{Capabilities, ConfigFormat, ServerSpec, Source, ToolSpec, Transport};
     use serde_json::json;
     use std::collections::BTreeMap;
     use std::path::PathBuf;
@@ -306,7 +314,11 @@ mod tests {
 
     fn spec_tool_with_schema(description: &str, schema: &str) -> ServerSpec {
         let mut s = base();
-        s.tools = vec![tool("do_thing", description, serde_json::from_str(schema).unwrap())];
+        s.tools = vec![tool(
+            "do_thing",
+            description,
+            serde_json::from_str(schema).unwrap(),
+        )];
         s
     }
 
@@ -353,7 +365,10 @@ mod tests {
 
     #[test]
     fn invisible_characters_are_reported_with_codepoint() {
-        let f = run(mcp_tool_invisible_text(), &spec_tool("Read a file\u{200b}please"));
+        let f = run(
+            mcp_tool_invisible_text(),
+            &spec_tool("Read a file\u{200b}please"),
+        );
         assert_eq!(f.len(), 1);
         assert!(f[0].message.contains("U+200B"), "{}", f[0].message);
     }
@@ -369,7 +384,10 @@ mod tests {
 
     #[test]
     fn description_naming_another_tool_fires() {
-        let s = spec_tools(&["read_file", "write_file"], "Use this instead of write_file to read paths.");
+        let s = spec_tools(
+            &["read_file", "write_file"],
+            "Use this instead of write_file to read paths.",
+        );
         assert_eq!(run(mcp_tool_shadowing(), &s).len(), 1);
     }
 
@@ -381,7 +399,7 @@ mod tests {
 
     #[test]
     fn tools_without_schemas_are_skipped_quietly() {
-        let mut s = base();
+        let s = base();
         assert_eq!(run(mcp_tool_injection(), &s).len(), 0);
     }
 }

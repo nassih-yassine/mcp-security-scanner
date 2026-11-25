@@ -75,7 +75,11 @@ fn vulnerable_pinned_version_produces_a_finding() {
     let out = cmd.output().unwrap();
     let stdout = String::from_utf8_lossy(&out.stdout);
     let stderr = String::from_utf8_lossy(&out.stderr);
-    assert_eq!(out.status.code(), Some(2), "stdout={stdout} stderr={stderr}");
+    assert_eq!(
+        out.status.code(),
+        Some(2),
+        "stdout={stdout} stderr={stderr}"
+    );
     assert!(stdout.contains("mcp-osv-vulnerable"), "{stdout}");
     assert!(fake.hits.load(Ordering::SeqCst) > 0);
 }
@@ -88,7 +92,11 @@ fn offline_never_contacts_the_advisory_host() {
     );
     scan(&dir, &fake.base, false).assert().code(0);
     std::thread::sleep(Duration::from_millis(150));
-    assert_eq!(fake.hits.load(Ordering::SeqCst), 0, "offline scan made a request");
+    assert_eq!(
+        fake.hits.load(Ordering::SeqCst),
+        0,
+        "offline scan made a request"
+    );
 }
 
 #[test]

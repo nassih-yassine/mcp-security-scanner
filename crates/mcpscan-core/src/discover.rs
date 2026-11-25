@@ -159,7 +159,10 @@ mod tests {
         );
         assert!(linux.iter().any(|p| p.ends_with(".codex/config.toml")));
         let mac = user_candidates(Platform::MacOs);
-        assert!(mac.iter().any(|p| p.to_string_lossy().contains("Application Support/Claude")));
+        assert!(
+            mac.iter()
+                .any(|p| p.to_string_lossy().contains("Application Support/Claude"))
+        );
         let win = user_candidates(Platform::Windows);
         assert!(win.iter().any(|p| p.to_string_lossy().contains("AppData")));
     }
@@ -179,12 +182,18 @@ mod tests {
     #[test]
     fn user_paths_are_only_included_when_asked() {
         let off = candidates(&DiscoverOptions::default());
-        assert!(!off.iter().any(|p| p.to_string_lossy().contains("claude_desktop_config")));
+        assert!(
+            !off.iter()
+                .any(|p| p.to_string_lossy().contains("claude_desktop_config"))
+        );
         let on = candidates(&DiscoverOptions {
             include_user: true,
             ..Default::default()
         });
-        assert!(on.iter().any(|p| p.to_string_lossy().contains("claude_desktop_config")));
+        assert!(
+            on.iter()
+                .any(|p| p.to_string_lossy().contains("claude_desktop_config"))
+        );
     }
 
     #[test]

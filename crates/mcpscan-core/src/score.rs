@@ -131,7 +131,9 @@ mod tests {
         assert_eq!(score(&[f(Severity::Critical, Confidence::High)]), 60);
         assert_eq!(score(&[f(Severity::High, Confidence::High)]), 80);
         assert_eq!(score(&[f(Severity::Medium, Confidence::Medium)]), 96);
-        let five: Vec<_> = (0..5).map(|_| f(Severity::Critical, Confidence::High)).collect();
+        let five: Vec<_> = (0..5)
+            .map(|_| f(Severity::Critical, Confidence::High))
+            .collect();
         assert_eq!(score(&five), 0);
     }
 

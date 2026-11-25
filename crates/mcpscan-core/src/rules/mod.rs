@@ -123,8 +123,7 @@ pub fn redact(value: &str) -> String {
 mod tests {
     use super::*;
     use crate::model::{Confidence, ConfigFormat, Finding, Location, ServerSpec, Severity, Source};
-    use std::collections::BTreeMap;
-use std::path::PathBuf;
+    use std::path::PathBuf;
 
     fn spec() -> ServerSpec {
         ServerSpec {

@@ -1,6 +1,6 @@
 //! Credential exposure: known provider prefixes, and entropy as a fallback.
 
-use crate::model::{Confidence, Evidence, Finding, Location, Severity, ServerSpec};
+use crate::model::{Confidence, Evidence, Finding, Location, ServerSpec, Severity};
 use crate::rules::{Rule, RuleCtx, redact};
 use serde::Deserialize;
 use std::sync::OnceLock;
@@ -66,7 +66,13 @@ struct Candidate<'a> {
 }
 
 const SECRET_FLAGS: [&str; 8] = [
-    "--token", "--api-key", "--apikey", "--password", "--secret", "--auth", "-token",
+    "--token",
+    "--api-key",
+    "--apikey",
+    "--password",
+    "--secret",
+    "--auth",
+    "-token",
     "--access-token",
 ];
 
@@ -101,20 +107,18 @@ fn candidates(spec: &ServerSpec) -> Vec<Candidate<'_>> {
         }
         prev = Some(arg);
     }
-    if let Some(url) = &spec.url {
-        if let Some(query) = url.split('?').nth(1) {
-            for pair in query.split('&') {
-                let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
-                if ["token", "key", "secret", "password", "apikey", "api_key"]
-                    .iter()
-                    .any(|k| key.eq_ignore_ascii_case(k))
-                {
-                    out.push(Candidate {
-                        pointer: format!("{base}/url"),
-                        value,
-                        kind: "url-query",
-                    });
-                }
+    if let Some(query) = spec.url.as_ref().and_then(|url| url.split('?').nth(1)) {
+        for pair in query.split('&') {
+            let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+            if ["token", "key", "secret", "password", "apikey", "api_key"]
+                .iter()
+                .any(|k| key.eq_ignore_ascii_case(k))
+            {
+                out.push(Candidate {
+                    pointer: format!("{base}/url"),
+                    value,
+                    kind: "url-query",
+                });
             }
         }
     }
@@ -316,7 +320,10 @@ mod tests {
         assert_eq!(f.len(), 1);
         assert_eq!(f[0].severity, Severity::Critical);
 
-        let h = spec_header("Authorization", "Bearer sk-proj-abcdefghijklmnopqrstuvwxyz1234");
+        let h = spec_header(
+            "Authorization",
+            "Bearer sk-proj-abcdefghijklmnopqrstuvwxyz1234",
+        );
         assert_eq!(run(mcp_secret_literal(), &h).len(), 1);
 
         let a = spec_args(&["--token", "sk-ant-abcdefghijklmnop1234567890"]);
@@ -335,7 +342,11 @@ mod tests {
             "sk-xxxx",
             "file:///run/secret",
         ] {
-            assert_eq!(run(mcp_secret_literal(), &spec_env(&[("TOKEN", v)])).len(), 0, "{v}");
+            assert_eq!(
+                run(mcp_secret_literal(), &spec_env(&[("TOKEN", v)])).len(),
+                0,
+                "{v}"
+            );
         }
     }
 
@@ -367,7 +378,9 @@ mod tests {
     #[test]
     fn url_query_secrets_fire() {
         let mut s = base();
-        s.url = Some("https://api.example.test/mcp?token=ghp_1234567890abcdefghijklmnopqrstuvwx".into());
+        s.url = Some(
+            "https://api.example.test/mcp?token=ghp_1234567890abcdefghijklmnopqrstuvwx".into(),
+        );
         let f = run(mcp_secret_literal(), &s);
         assert_eq!(f.len(), 1);
     }

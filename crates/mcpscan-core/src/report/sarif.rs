@@ -2,7 +2,7 @@
 //! format of truth. Rule IDs, severities and fingerprints come from the same
 //! `Finding` the other reports use.
 
-use crate::model::{Severity, ScanReport};
+use crate::model::{ScanReport, Severity};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 
@@ -50,8 +50,9 @@ pub fn render(report: &ScanReport, version: &str) -> Result<String, serde_json::
     };
 
     let rules: Vec<Value> = rules_by_id
-        .iter()
-        .map(|(id, _)| {
+        .keys()
+        .copied()
+        .map(|id| {
             json!({
                 "id": id,
                 "name": id,
@@ -201,7 +202,10 @@ mod tests {
 
     #[test]
     fn fingerprints_are_stable_across_runs() {
-        assert_eq!(render(&report(), "0.1.0").unwrap(), render(&report(), "0.1.0").unwrap());
+        assert_eq!(
+            render(&report(), "0.1.0").unwrap(),
+            render(&report(), "0.1.0").unwrap()
+        );
     }
 
     #[test]
@@ -218,11 +222,10 @@ mod tests {
 
     #[test]
     fn rules_are_deduplicated_and_indexed() {
-        let document = doc(vec![
-            f(Severity::Critical, "/a"),
-            f(Severity::High, "/b"),
-        ]);
-        let rules = document["runs"][0]["tool"]["driver"]["rules"].as_array().unwrap();
+        let document = doc(vec![f(Severity::Critical, "/a"), f(Severity::High, "/b")]);
+        let rules = document["runs"][0]["tool"]["driver"]["rules"]
+            .as_array()
+            .unwrap();
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0]["id"], "mcp-secret-literal");
         assert_eq!(document["runs"][0]["results"][1]["ruleIndex"], 0);

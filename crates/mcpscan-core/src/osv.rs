@@ -69,11 +69,11 @@ impl OsvClient {
 
     /// Build from `MCPSCAN_OSV_BASE`, defaulting to `https://api.osv.dev`.
     pub fn from_env() -> Result<Self, OsvError> {
-        let raw = std::env::var("MCPSCAN_OSV_BASE")
-            .unwrap_or_else(|_| "https://api.osv.dev".to_string());
+        let raw =
+            std::env::var("MCPSCAN_OSV_BASE").unwrap_or_else(|_| "https://api.osv.dev".to_string());
         let base = Url::parse(&raw).map_err(|e| OsvError::Base(e.to_string()))?;
-        let allow_loopback = cfg!(debug_assertions)
-            && std::env::var("MCPSCAN_ALLOW_LOOPBACK").as_deref() == Ok("1");
+        let allow_loopback =
+            cfg!(debug_assertions) && std::env::var("MCPSCAN_ALLOW_LOOPBACK").as_deref() == Ok("1");
         if !allow_loopback {
             netpolicy::check_host(&base, &["osv.dev"])?;
         }
@@ -135,7 +135,9 @@ impl OsvClient {
     }
 
     fn cache_path(&self, key: &str) -> Option<PathBuf> {
-        self.cache_dir.as_ref().map(|dir| dir.join(format!("{key}.json")))
+        self.cache_dir
+            .as_ref()
+            .map(|dir| dir.join(format!("{key}.json")))
     }
 
     fn read_cache(&self, key: &str, require_fresh: bool) -> Option<String> {

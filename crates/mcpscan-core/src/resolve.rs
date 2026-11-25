@@ -101,11 +101,12 @@ pub fn capabilities(spec: &ServerSpec) -> Capabilities {
 
     caps.fs_read = spec.args.iter().any(|a| looks_like_path(a))
         || FS_HINTS.iter().any(|h| haystack.contains(h));
-    caps.fs_write = spec
-        .args
-        .iter()
-        .chain(spec.env.values())
-        .any(|v| matches!(v.as_str(), "--allow-write" | "--write" | "--rw" | "rw" | "read-write" | "read_write"));
+    caps.fs_write = spec.args.iter().chain(spec.env.values()).any(|v| {
+        matches!(
+            v.as_str(),
+            "--allow-write" | "--write" | "--rw" | "rw" | "read-write" | "read_write"
+        )
+    });
     caps.db_read = DB_HINTS.iter().any(|h| haystack.contains(h));
     caps.db_write = spec
         .args
@@ -200,7 +201,11 @@ mod tests {
     fn stdio_launch_infers_shell_exec_and_egress() {
         let mut s = spec_with(
             "npx",
-            &["-y", "@modelcontextprotocol/server-filesystem", "/home/me/docs"],
+            &[
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/home/me/docs",
+            ],
         );
         resolve(&mut s);
         assert!(s.capabilities.shell_exec);
@@ -222,7 +227,10 @@ mod tests {
         let mut s = spec_with("npx", &["-y", "@supabase/mcp-server-supabase@0.4.1"]);
         resolve(&mut s);
         assert!(s.capabilities.db_read);
-        assert_eq!(s.pkg.as_ref().unwrap().name, "@supabase/mcp-server-supabase");
+        assert_eq!(
+            s.pkg.as_ref().unwrap().name,
+            "@supabase/mcp-server-supabase"
+        );
         assert_eq!(s.pkg.as_ref().unwrap().version.as_deref(), Some("0.4.1"));
         assert_eq!(s.pkg.as_ref().unwrap().registry, Registry::Npm);
     }
@@ -233,9 +241,11 @@ mod tests {
         assert_eq!(uv.registry, Registry::PyPi);
         assert_eq!(uv.version.as_deref(), Some("0.6.2"));
 
-        let docker =
-            package_ref(&spec_with("docker", &["run", "-i", "--rm", "ghcr.io/x/y@sha256:abc"]))
-                .unwrap();
+        let docker = package_ref(&spec_with(
+            "docker",
+            &["run", "-i", "--rm", "ghcr.io/x/y@sha256:abc"],
+        ))
+        .unwrap();
         assert_eq!(docker.registry, Registry::Docker);
         assert_eq!(docker.version.as_deref(), Some("sha256:abc"));
     }
@@ -256,7 +266,10 @@ mod tests {
         assert!(read.capabilities.fs_read);
         assert!(!read.capabilities.fs_write);
 
-        let mut write = spec_with("npx", &["-y", "server-filesystem", "/data", "--allow-write"]);
+        let mut write = spec_with(
+            "npx",
+            &["-y", "server-filesystem", "/data", "--allow-write"],
+        );
         resolve(&mut write);
         assert!(write.capabilities.fs_write);
     }

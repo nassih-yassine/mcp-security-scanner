@@ -310,8 +310,15 @@ mod tests {
             Severity::High,
             Confidence::High,
             "message",
-            Location { file: PathBuf::from(file), pointer: pointer.into(), span: None },
-            Some(Evidence { kind: "env".into(), redacted: "sk-…(12)".into() }),
+            Location {
+                file: PathBuf::from(file),
+                pointer: pointer.into(),
+                span: None,
+            },
+            Some(Evidence {
+                kind: "env".into(),
+                redacted: "sk-…(12)".into(),
+            }),
             "fix it",
         )
     }
@@ -340,7 +347,11 @@ mod tests {
         assert_eq!(a.fingerprint, b.fingerprint);
         assert_ne!(a.fingerprint, c.fingerprint);
         assert_eq!(a.fingerprint.len(), 64);
-        assert!(a.fingerprint.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
+        assert!(
+            a.fingerprint
+                .chars()
+                .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
+        );
     }
 
     #[test]
@@ -360,9 +371,18 @@ mod tests {
 
     #[test]
     fn enum_wire_names_are_kebab_case() {
-        assert_eq!(serde_json::to_string(&Severity::Critical).unwrap(), "\"critical\"");
-        assert_eq!(serde_json::to_string(&Confidence::Medium).unwrap(), "\"medium\"");
-        assert_eq!(serde_json::to_string(&ExitCode::Findings).unwrap(), "\"findings\"");
+        assert_eq!(
+            serde_json::to_string(&Severity::Critical).unwrap(),
+            "\"critical\""
+        );
+        assert_eq!(
+            serde_json::to_string(&Confidence::Medium).unwrap(),
+            "\"medium\""
+        );
+        assert_eq!(
+            serde_json::to_string(&ExitCode::Findings).unwrap(),
+            "\"findings\""
+        );
         assert_eq!(ExitCode::Findings.as_i32(), 2);
         assert_eq!(ExitCode::Incomplete.as_i32(), 3);
     }

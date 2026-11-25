@@ -117,11 +117,7 @@ pub fn parse_bytes(
 }
 
 /// Parse config text.
-pub fn parse_str(
-    src: &str,
-    path: &Path,
-    format: ConfigFormat,
-) -> Result<ParsedConfig, ParseError> {
+pub fn parse_str(src: &str, path: &Path, format: ConfigFormat) -> Result<ParsedConfig, ParseError> {
     if src.len() as u64 > MAX_CONFIG_BYTES {
         return Err(ParseError::TooLarge {
             path: path.to_path_buf(),
@@ -233,8 +229,12 @@ fn read_entry(
     let url = field("url").and_then(|p| string_of(&p.value));
     let args = field("args").map(|p| args_of(&p.value)).unwrap_or_default();
     let env = field("env").map(|p| map_of(&p.value)).unwrap_or_default();
-    let headers = field("headers").map(|p| map_of(&p.value)).unwrap_or_default();
-    let declared_scopes = field("scopes").map(|p| args_of(&p.value)).unwrap_or_default();
+    let headers = field("headers")
+        .map(|p| map_of(&p.value))
+        .unwrap_or_default();
+    let declared_scopes = field("scopes")
+        .map(|p| args_of(&p.value))
+        .unwrap_or_default();
     let transport = match field("type").and_then(|p| string_of(&p.value)).as_deref() {
         Some("sse") => Transport::Sse,
         Some("http") | Some("streamable-http") => Transport::Http,
@@ -266,12 +266,16 @@ fn read_entry(
 }
 
 fn parse_toml(src: &str, path: &Path) -> Result<ParsedConfig, ParseError> {
-    let doc = toml_edit::ImDocument::parse(src).map_err(|e| ParseError::Syntax {
+    let doc = toml_edit::Document::parse(src).map_err(|e| ParseError::Syntax {
         path: path.to_path_buf(),
         message: e.to_string(),
     })?;
     let mut out = ParsedConfig::default();
-    let Some(container) = doc.as_table().get("mcp_servers").and_then(|i| i.as_table_like()) else {
+    let Some(container) = doc
+        .as_table()
+        .get("mcp_servers")
+        .and_then(|i| i.as_table_like())
+    else {
         return Ok(out);
     };
     for (name, item) in container.iter() {
@@ -461,7 +465,10 @@ mod tests {
     fn double_slash_inside_a_string_is_not_a_comment() {
         let src = r#"{"mcpServers":{"s":{"url":"https://example.test/a"}}}"#;
         let parsed = parse_str(src, Path::new("c.json"), ConfigFormat::Json).unwrap();
-        assert_eq!(parsed.servers[0].url.as_deref(), Some("https://example.test/a"));
+        assert_eq!(
+            parsed.servers[0].url.as_deref(),
+            Some("https://example.test/a")
+        );
     }
 
     #[test]
@@ -503,7 +510,8 @@ mod tests {
 
     #[test]
     fn env_and_headers_are_read_as_strings() {
-        let src = r#"{"mcpServers":{"s":{"command":"x","env":{"A":1,"B":true},"headers":{"H":"v"}}}}"#;
+        let src =
+            r#"{"mcpServers":{"s":{"command":"x","env":{"A":1,"B":true},"headers":{"H":"v"}}}}"#;
         let parsed = parse_str(src, Path::new("c.json"), ConfigFormat::Json).unwrap();
         let s = &parsed.servers[0];
         assert_eq!(s.env.get("A").map(String::as_str), Some("1"));
@@ -521,6 +529,9 @@ mod tests {
         .unwrap();
         assert_eq!(parsed.servers[0].source.pointer, "/mcpServers/s");
         assert_eq!(parsed.servers[0].source.format, ConfigFormat::Json);
-        assert_eq!(parsed.servers[0].source.file.to_string_lossy(), "sub/.mcp.json");
+        assert_eq!(
+            parsed.servers[0].source.file.to_string_lossy(),
+            "sub/.mcp.json"
+        );
     }
 }

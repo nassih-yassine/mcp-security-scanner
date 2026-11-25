@@ -9,9 +9,9 @@ out, CI-ready.
 - `AGENT.md` (singular) = product brief: audience, pricing, kill criteria.
   **Do not rewrite it.**
 - `SPEC.md` = engineering spec. **Source of truth for how.**
-- No code, no `Cargo.toml`, no git history yet. Do not scaffold until the §8
-  checklist in `SPEC.md` is approved. Repo creation, `cargo init`, and dependency
-  installs all count as implementation.
+- Workspace is live: `mcpscan-core` (lib), `mcpscan` (bin), `xtask` (docs).
+  10 rules, four report formats, offline by default, OSV behind `--online`.
+- Public repo: https://github.com/nassih-yassine/mcp-security-scanner
 - `dep-vet` is out of scope: no Cargo dependency on it, no porting its modules.
   Owner decision; revisit only on request (`SPEC.md` §9 Q4).
 
@@ -56,15 +56,16 @@ An incomplete scan is exit 3, never a pass. A missing advisory check must read a
   `release`). Releases are cargo-dist; never hand-build and upload artifacts.
 - Conventional commits — `git-cliff` generates the CHANGELOG.
 
-## Commands (created in SPEC phase 1)
+## Commands
 
 ```bash
 cargo test --locked                                  # all
 cargo test -p mcpscan-core rules::secret             # one module
-cargo test --test cli scan_fixtures                  # one e2e case
+cargo test --test cli                                # one e2e file
 cargo clippy --locked --all-targets -- -D warnings
 cargo fmt --check
-cargo xtask gen-docs --check
+cargo xtask gen-docs --check                         # generated docs drift
+cargo run -q -p mcpscan -- scan fixtures/demo        # dogfood
 ```
 
 CI order: `fmt → clippy → docs-check → test (3 OS) → build → dogfood`.

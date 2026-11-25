@@ -9,8 +9,6 @@ use std::sync::OnceLock;
 #[derive(Deserialize)]
 struct ProviderMap {
     #[serde(default)]
-    read_only: Vec<String>,
-    #[serde(default)]
     read_equivalent: BTreeMap<String, String>,
     #[serde(default)]
     admin: Vec<String>,
@@ -36,10 +34,13 @@ fn split_scopes(value: &str) -> Vec<String> {
 /// The provider this server belongs to, and the scopes it declares.
 fn provider_and_scopes(spec: &ServerSpec) -> Option<(String, Vec<String>)> {
     for (key, value) in &spec.env {
-        if let Some(prefix) = key.to_ascii_lowercase().strip_suffix("_scopes").map(str::to_string) {
-            if maps().contains_key(&prefix) {
-                return Some((prefix, split_scopes(value)));
-            }
+        if let Some(prefix) = key
+            .to_ascii_lowercase()
+            .strip_suffix("_scopes")
+            .map(str::to_string)
+            && maps().contains_key(&prefix)
+        {
+            return Some((prefix, split_scopes(value)));
         }
     }
     let haystack = format!(
@@ -48,7 +49,10 @@ fn provider_and_scopes(spec: &ServerSpec) -> Option<(String, Vec<String>)> {
         spec.url.as_deref().unwrap_or("")
     )
     .to_ascii_lowercase();
-    let provider = maps().keys().find(|p| haystack.contains(p.as_str()))?;
+    let provider = maps()
+        .iter()
+        .find(|(p, _)| haystack.contains(p.as_str()))
+        .map(|(p, _)| p)?;
     Some((provider.clone(), spec.declared_scopes.clone()))
 }
 
@@ -102,7 +106,9 @@ fn run_write_when_read(spec: &ServerSpec, _ctx: &RuleCtx) -> Vec<Finding> {
                 "mcp-scope-write-when-read",
                 Severity::Medium,
                 Confidence::High,
-                format!("{provider} scope `{scope}` grants write access where a read-only scope exists"),
+                format!(
+                    "{provider} scope `{scope}` grants write access where a read-only scope exists"
+                ),
                 location(spec, scope),
                 evidence(&provider, scope),
                 format!("Use `{read_only}` instead of `{scope}` unless the task writes."),
@@ -230,14 +236,24 @@ mod tests {
 
     #[test]
     fn wildcard_scope_fires() {
-        assert_eq!(run(mcp_scope_wildcard(), &spec_scopes("github", &["repo", "*"])).len(), 1);
+        assert_eq!(
+            run(mcp_scope_wildcard(), &spec_scopes("github", &["repo", "*"])).len(),
+            1
+        );
     }
 
     #[test]
     fn write_scope_without_a_write_reason_fires() {
-        let f = run(mcp_scope_write_when_read(), &spec_scopes("github", &["repo"]));
+        let f = run(
+            mcp_scope_write_when_read(),
+            &spec_scopes("github", &["repo"]),
+        );
         assert_eq!(f.len(), 1);
-        assert!(f[0].remediation.contains("public_repo"), "{}", f[0].remediation);
+        assert!(
+            f[0].remediation.contains("public_repo"),
+            "{}",
+            f[0].remediation
+        );
     }
 
     #[test]
@@ -262,7 +278,10 @@ mod tests {
 
     #[test]
     fn unknown_provider_is_silent() {
-        assert_eq!(run(mcp_scope_wildcard(), &spec_scopes("acme", &["*"])).len(), 0);
+        assert_eq!(
+            run(mcp_scope_wildcard(), &spec_scopes("acme", &["*"])).len(),
+            0
+        );
     }
 
     #[test]

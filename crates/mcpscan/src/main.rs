@@ -7,8 +7,8 @@ use cli::{Cli, Commands, FailOn, Format};
 use mcpscan_core::model::ExitCode;
 use mcpscan_core::report;
 use mcpscan_core::rules;
+use mcpscan_core::scan::{AllowEntry, ScanOptions, scan};
 use mcpscan_core::score::{self, Policy};
-use mcpscan_core::scan::{scan, AllowEntry, ScanOptions};
 use std::process::ExitCode as ProcessExitCode;
 
 fn main() -> ProcessExitCode {
@@ -20,7 +20,11 @@ fn main() -> ProcessExitCode {
                 clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion
             );
             let _ = err.print();
-            return exit(if is_help { ExitCode::Clean } else { ExitCode::Incomplete });
+            return exit(if is_help {
+                ExitCode::Clean
+            } else {
+                ExitCode::Incomplete
+            });
         }
     };
     match run(cli) {
@@ -68,16 +72,12 @@ fn run_scan(args: cli::ScanArgs) -> Result<ExitCode, String> {
         Format::Sarif => {
             report::sarif::render(&report, env!("CARGO_PKG_VERSION")).map_err(|e| e.to_string())?
         }
-        other => {
-            return Err(format!(
-                "--format {} is not implemented in this build",
-                format_name(other)
-            ));
-        }
     };
 
     match args.output {
-        Some(path) => std::fs::write(&path, rendered).map_err(|e| format!("{}: {e}", path.display()))?,
+        Some(path) => {
+            std::fs::write(&path, rendered).map_err(|e| format!("{}: {e}", path.display()))?
+        }
         None => print!("{rendered}"),
     }
 
@@ -119,7 +119,12 @@ fn run_rules(args: cli::RulesArgs) -> Result<ExitCode, String> {
                 serde_json::to_string_pretty(&items).map_err(|e| e.to_string())?
             );
         }
-        other => return Err(format!("rules --format {} is not implemented", format_name(other))),
+        other => {
+            return Err(format!(
+                "rules --format {} is not implemented",
+                format_name(other)
+            ));
+        }
     }
     Ok(ExitCode::Clean)
 }

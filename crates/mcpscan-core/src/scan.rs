@@ -2,12 +2,13 @@
 
 use crate::discover::{self, DiscoverOptions, Platform};
 use crate::model::{
-    Capabilities, ConfigFormat, Finding, ScanReport, ServerSpec, Severity, Skipped, Source, Transport,
+    Capabilities, ConfigFormat, Finding, ScanReport, ServerSpec, Severity, Skipped, Source,
+    Transport,
 };
+use crate::osv::{self, OsvClient};
 use crate::parse::{self, ParseError};
 use crate::resolve;
 use crate::rules::{self, RuleCtx};
-use crate::osv::{self, OsvClient};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -25,15 +26,15 @@ pub struct AllowEntry {
 impl AllowEntry {
     /// Parse `rule-id:path-prefix=reason`.
     pub fn parse(raw: &str) -> Result<Self, String> {
-        let (head, reason) = raw
-            .split_once('=')
-            .ok_or_else(|| format!("allow entry needs a reason: expected <rule>:<path>=<reason>, got {raw}"))?;
+        let (head, reason) = raw.split_once('=').ok_or_else(|| {
+            format!("allow entry needs a reason: expected <rule>:<path>=<reason>, got {raw}")
+        })?;
         if reason.trim().is_empty() {
             return Err(format!("allow entry needs a non-empty reason: {raw}"));
         }
-        let (rule_id, path_prefix) = head
-            .split_once(':')
-            .ok_or_else(|| format!("allow entry needs a path: expected <rule>:<path>=<reason>, got {raw}"))?;
+        let (rule_id, path_prefix) = head.split_once(':').ok_or_else(|| {
+            format!("allow entry needs a path: expected <rule>:<path>=<reason>, got {raw}")
+        })?;
         Ok(Self {
             rule_id: rule_id.to_string(),
             path_prefix: path_prefix.to_string(),
@@ -161,7 +162,7 @@ pub fn scan(opts: &ScanOptions) -> Result<ScanReport, ScanError> {
 
     let mut osv_hits: BTreeMap<String, Vec<osv::OsvHit>> = BTreeMap::new();
     let mut packages: Vec<_> = servers.iter().filter_map(|s| s.pkg.clone()).collect();
-    packages.sort_by(|a, b| osv::key(a).cmp(&osv::key(b)));
+    packages.sort_by_key(osv::key);
     packages.dedup_by(|a, b| osv::key(a) == osv::key(b));
     packages.retain(|p| p.version.is_some());
 
@@ -217,9 +218,9 @@ pub fn scan(opts: &ScanOptions) -> Result<ScanReport, ScanError> {
 fn apply_allow(findings: &mut [Finding], allow: &[AllowEntry]) {
     for finding in findings.iter_mut() {
         let file = finding.location.file.to_string_lossy();
-        let hit = allow.iter().find(|entry| {
-            entry.rule_id == finding.rule_id && file.starts_with(&entry.path_prefix)
-        });
+        let hit = allow
+            .iter()
+            .find(|entry| entry.rule_id == finding.rule_id && file.starts_with(&entry.path_prefix));
         if let Some(entry) = hit {
             finding.severity = Severity::Low;
             finding.message = format!("{} (allowed: {})", finding.message, entry.reason);

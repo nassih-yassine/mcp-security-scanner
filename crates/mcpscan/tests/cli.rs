@@ -69,7 +69,12 @@ fn allowlist_downgrades_and_demands_a_reason() {
     assert!(String::from_utf8_lossy(&ok.stdout).contains("test fixture"));
 
     bin()
-        .args(["scan", "fixtures/demo", "--allow", "mcp-secret-literal:fixtures/demo"])
+        .args([
+            "scan",
+            "fixtures/demo",
+            "--allow",
+            "mcp-secret-literal:fixtures/demo",
+        ])
         .assert()
         .code(3)
         .stderr(predicate::str::contains("reason"));

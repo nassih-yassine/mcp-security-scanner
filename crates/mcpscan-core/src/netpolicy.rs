@@ -32,10 +32,8 @@ pub fn check_host(url: &Url, allowed: &[&str]) -> Result<(), PolicyError> {
     if !url.username().is_empty() || url.password().is_some() {
         return Err(PolicyError::Userinfo(raw));
     }
-    if let Some(port) = url.port() {
-        if port != 443 {
-            return Err(PolicyError::Port(raw));
-        }
+    if url.port().is_some_and(|port| port != 443) {
+        return Err(PolicyError::Port(raw));
     }
     let host = url.host_str().unwrap_or("").to_ascii_lowercase();
     if host.is_empty() {
