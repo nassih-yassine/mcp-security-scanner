@@ -1,0 +1,1 @@
+{"servers":{"vscode-server":{"type":"stdio","command":"npx","args":["-y","vscode-tools"]}}}

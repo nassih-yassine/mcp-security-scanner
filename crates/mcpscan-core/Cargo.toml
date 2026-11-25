@@ -11,3 +11,6 @@ description = "Scanner core for MCP server and agent tool configs"
 serde.workspace = true
 serde_json.workspace = true
 sha2 = "0.11"
+jsonc-parser = { version = "0.26", features = ["serde"] }
+toml_edit = "0.23"
+thiserror = "2"

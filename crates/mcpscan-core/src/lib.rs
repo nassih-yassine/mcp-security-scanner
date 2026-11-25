@@ -6,3 +6,5 @@
 #![deny(missing_docs)]
 
 pub mod model;
+
+pub mod parse;

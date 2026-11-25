@@ -1,0 +1,6 @@
+{
+  // cursor project scope
+  "mcpServers": {
+    "cursor-server": { "command": "npx", "args": ["-y", "cursor-tools"] },
+  },
+}
