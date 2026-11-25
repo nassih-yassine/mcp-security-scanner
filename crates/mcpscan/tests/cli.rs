@@ -118,3 +118,38 @@ fn json_output_is_byte_identical_across_runs() {
     assert_eq!(a.status.code(), Some(2));
     assert_eq!(a.stdout, b.stdout);
 }
+
+#[test]
+fn fail_on_threshold_is_honored() {
+    bin()
+        .args(["scan", "fixtures/demo", "--fail-on", "high"])
+        .assert()
+        .code(2);
+    bin()
+        .args(["scan", "fixtures/demo", "--fail-on", "none"])
+        .assert()
+        .code(0);
+    bin()
+        .args(["scan", "fixtures/_parse/clean", "--fail-on", "low"])
+        .assert()
+        .code(0);
+}
+
+#[test]
+fn output_file_only_changes_where_the_report_goes() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("report.json");
+    bin()
+        .args([
+            "scan",
+            "fixtures/demo",
+            "--format",
+            "json",
+            "--output",
+            out.to_str().unwrap(),
+        ])
+        .assert()
+        .code(2);
+    let text = std::fs::read_to_string(&out).unwrap();
+    assert!(text.contains("mcp-secret-literal"));
+}

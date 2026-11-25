@@ -16,3 +16,5 @@ pub mod resolve;
 pub mod rules;
 pub mod report;
 pub mod scan;
+
+pub mod score;

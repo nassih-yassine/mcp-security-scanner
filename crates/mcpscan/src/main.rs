@@ -4,9 +4,10 @@ mod cli;
 
 use clap::Parser;
 use cli::{Cli, Commands, FailOn, Format};
-use mcpscan_core::model::{ExitCode, Severity};
+use mcpscan_core::model::ExitCode;
 use mcpscan_core::report;
 use mcpscan_core::rules;
+use mcpscan_core::score::{self, Policy};
 use mcpscan_core::scan::{scan, AllowEntry, ScanOptions};
 use std::process::ExitCode as ProcessExitCode;
 
@@ -76,13 +77,11 @@ fn run_scan(args: cli::ScanArgs) -> Result<ExitCode, String> {
         None => print!("{rendered}"),
     }
 
-    let threshold = threshold(args.fail_on);
-    Ok(match threshold {
-        Some(threshold) if report.findings.iter().any(|f| f.severity >= threshold) => {
-            ExitCode::Findings
-        }
-        _ => ExitCode::Clean,
-    })
+    let policy = Policy {
+        fail_on: threshold(args.fail_on),
+        include_medium: args.include_medium,
+    };
+    Ok(score::gate(&report.findings, &policy))
 }
 
 fn run_rules(args: cli::RulesArgs) -> Result<ExitCode, String> {
@@ -121,7 +120,8 @@ fn run_rules(args: cli::RulesArgs) -> Result<ExitCode, String> {
     Ok(ExitCode::Clean)
 }
 
-fn threshold(fail_on: FailOn) -> Option<Severity> {
+fn threshold(fail_on: FailOn) -> Option<mcpscan_core::model::Severity> {
+    use mcpscan_core::model::Severity;
     match fail_on {
         FailOn::Low => Some(Severity::Low),
         FailOn::Medium => Some(Severity::Medium),
