@@ -7,6 +7,7 @@ use crate::model::{
 use crate::parse::{self, ParseError};
 use crate::resolve;
 use crate::rules::{self, RuleCtx};
+use crate::osv::{self, OsvClient};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -83,6 +84,10 @@ pub enum ScanError {
     /// A requested root does not exist.
     #[error("{0}: no such file or directory")]
     MissingRoot(PathBuf),
+    /// The scan started but could not finish honestly (for example, advisories
+    /// were requested and the lookup failed).
+    #[error("{0}")]
+    Incomplete(String),
     /// An existing file could not be read or parsed.
     #[error("{path}: {message}")]
     Unreadable {
@@ -154,10 +159,48 @@ pub fn scan(opts: &ScanOptions) -> Result<ScanReport, ScanError> {
     });
     skipped.sort_by(|a, b| a.file.cmp(&b.file).then_with(|| a.reason.cmp(&b.reason)));
 
+    let mut osv_hits: BTreeMap<String, Vec<osv::OsvHit>> = BTreeMap::new();
+    let mut packages: Vec<_> = servers.iter().filter_map(|s| s.pkg.clone()).collect();
+    packages.sort_by(|a, b| osv::key(a).cmp(&osv::key(b)));
+    packages.dedup_by(|a, b| osv::key(a) == osv::key(b));
+    packages.retain(|p| p.version.is_some());
+
+    if opts.offline {
+        for pkg in &packages {
+            skipped.push(Skipped {
+                file: PathBuf::from(&pkg.name),
+                reason: format!("advisory check skipped for {} (offline)", osv::key(pkg)),
+            });
+        }
+    } else if !packages.is_empty() {
+        let client = OsvClient::from_env()
+            .map_err(|e| ScanError::Incomplete(format!("could not check advisories: {e}")))?;
+        let hits = client
+            .query_batch(&packages)
+            .map_err(|e| ScanError::Incomplete(format!("could not check advisories: {e}")))?;
+        for hit in hits {
+            let version = hit.version.clone();
+            let package = hit.package.clone();
+            let registry = packages
+                .iter()
+                .find(|p| p.name == package && p.version.as_deref() == Some(version.as_str()))
+                .map(|p| p.registry);
+            if let Some(registry) = registry {
+                let key = osv::key(&crate::model::PackageRef {
+                    registry,
+                    name: package,
+                    version: Some(version),
+                });
+                osv_hits.entry(key).or_default().push(hit);
+            }
+        }
+    }
+
     let ctx = RuleCtx {
         offline: opts.offline,
         tools_dir: opts.tools_dir.clone(),
         include_medium: opts.include_medium,
+        osv_hits,
     };
     let mut findings = rules::run_all(&servers, &ctx);
     apply_allow(&mut findings, &opts.allow);

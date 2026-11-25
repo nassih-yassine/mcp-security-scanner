@@ -1,11 +1,13 @@
 //! The rule registry. Rules are pure functions over one [`ServerSpec`].
 
 pub mod exfil;
+pub mod osv;
 pub mod scope;
 pub mod secret;
 pub mod tool;
 
 use crate::model::{Confidence, Finding, ServerSpec};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 /// One check. `severity` is what the rule reports at its most severe; a rule
@@ -36,6 +38,8 @@ pub struct RuleCtx {
     pub tools_dir: Option<PathBuf>,
     /// Include medium-confidence rules.
     pub include_medium: bool,
+    /// Advisory hits collected by the scan, keyed by `osv::key`.
+    pub osv_hits: BTreeMap<String, Vec<crate::osv::OsvHit>>,
 }
 
 impl Default for RuleCtx {
@@ -44,12 +48,14 @@ impl Default for RuleCtx {
             offline: true,
             tools_dir: None,
             include_medium: false,
+            osv_hits: BTreeMap::new(),
         }
     }
 }
 
 static RULES: &[Rule] = &[
     exfil::mcp_exfil_path(),
+    osv::mcp_osv_vulnerable(),
     scope::mcp_scope_admin(),
     scope::mcp_scope_wildcard(),
     scope::mcp_scope_write_when_read(),
@@ -117,7 +123,8 @@ pub fn redact(value: &str) -> String {
 mod tests {
     use super::*;
     use crate::model::{Confidence, ConfigFormat, Finding, Location, ServerSpec, Severity, Source};
-    use std::path::PathBuf;
+    use std::collections::BTreeMap;
+use std::path::PathBuf;
 
     fn spec() -> ServerSpec {
         ServerSpec {

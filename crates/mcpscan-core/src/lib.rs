@@ -6,6 +6,8 @@
 #![deny(missing_docs)]
 
 pub mod model;
+pub mod netpolicy;
+pub mod osv;
 
 pub mod parse;
 
