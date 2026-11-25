@@ -2,4 +2,5 @@
 
 pub mod human;
 pub mod json;
+pub mod markdown;
 pub mod sarif;

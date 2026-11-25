@@ -167,3 +167,14 @@ fn sarif_format_is_valid_and_keeps_the_exit_code() {
     assert_eq!(document["runs"][0]["tool"]["driver"]["name"], "mcpscan");
     assert!(text.contains("mcp-secret-literal"));
 }
+
+#[test]
+fn markdown_format_reports_a_grade() {
+    let out = bin()
+        .args(["scan", "fixtures/demo", "--format", "markdown"])
+        .output()
+        .unwrap();
+    assert_eq!(out.status.code(), Some(2));
+    let text = String::from_utf8_lossy(&out.stdout);
+    assert!(text.starts_with("## MCP security score: "));
+}

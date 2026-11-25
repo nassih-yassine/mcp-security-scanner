@@ -1,0 +1,18 @@
+[
+  {
+    "id": "override",
+    "pattern": "(?i)\\b(ignore|disregard|forget)\\s+(all\\s+)?(previous|prior|above|earlier)\\s+(instructions?|rules?|prompts?|context)"
+  },
+  {
+    "id": "prep-read",
+    "pattern": "(?i)\\bbefore\\s+(using|you\\s+use)\\s+this\\s+tool\\b[^.]{0,120}\\b(read|open|access|send|upload|copy)\\b"
+  },
+  {
+    "id": "hide-from-user",
+    "pattern": "(?i)\\b(do\\s+not|don't|never)\\s+(tell|inform|notify)\\s+the\\s+user\\b"
+  },
+  {
+    "id": "exfil-url",
+    "pattern": "(?i)\\b(send|post|upload|forward|exfiltrate)\\b[^.]{0,60}https?://"
+  }
+]

@@ -1,0 +1,15 @@
+---
+source: crates/mcpscan-core/src/report/markdown.rs
+expression: render(&report())
+---
+## MCP security score: C (60/100)
+
+0 server(s) scanned, 1 finding(s).
+
+| Severity | Rule | File | Message |
+|---|---|---|---|
+| critical | `mcp-secret-literal` | `fixtures/demo/.mcp.json` | literal credential |
+
+### How to fix
+
+- `mcp-secret-literal` at `/mcpServers/github/env/GITHUB_TOKEN`: Move the credential to an environment variable and rotate it. (evidence: ghp_…uvwx (40))
