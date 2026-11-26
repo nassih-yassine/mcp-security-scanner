@@ -424,7 +424,7 @@ job, not by hope.
   expected output; FP reports get the `false positive` label and become
   regression fixtures.
 - Issue templates: bug, rule request, **false positive** (with the finding JSON).
-- `CODEOWNERS` on `data/rules/` and `docs/rules/`.
+- `CODEOWNERS` on `crates/mcpscan-core/data/rules/` and `docs/rules/`.
 - Dependabot: cargo, github-actions (ignoring `release.yml`'s pinned actions,
   which are updated in `dist-workspace.toml`), docker.
 - `.githooks/pre-commit` = `cargo fmt --check` + `clippy` on changed crates;
