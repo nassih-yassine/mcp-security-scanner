@@ -43,6 +43,7 @@ There is no `npm audit` for agent tool permissions. This is that.
 | `mcp-scope-write-when-read` | medium | high |
 | `mcp-secret-entropy` | high | medium |
 | `mcp-secret-literal` | critical | high |
+| `mcp-secret-to-network` | medium | medium |
 | `mcp-tool-injection` | high | high |
 | `mcp-tool-invisible-text` | high | high |
 | `mcp-tool-schema-mismatch` | medium | medium |

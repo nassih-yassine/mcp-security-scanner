@@ -4,6 +4,7 @@ pub mod exfil;
 pub mod osv;
 pub mod scope;
 pub mod secret;
+pub mod secret_net;
 pub mod tool;
 pub mod url;
 
@@ -62,6 +63,7 @@ static RULES: &[Rule] = &[
     scope::mcp_scope_write_when_read(),
     secret::mcp_secret_entropy(),
     secret::mcp_secret_literal(),
+    secret_net::mcp_secret_to_network(),
     tool::mcp_tool_injection(),
     tool::mcp_tool_invisible_text(),
     tool::mcp_tool_schema_mismatch(),

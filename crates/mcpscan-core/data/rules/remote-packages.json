@@ -1,0 +1,93 @@
+[
+  {
+    "match": "server-filesystem",
+    "egress": false,
+    "fs_read": true
+  },
+  {
+    "match": "server-git",
+    "egress": true,
+    "fs_read": true
+  },
+  {
+    "match": "server-github",
+    "egress": true
+  },
+  {
+    "match": "server-slack",
+    "egress": true
+  },
+  {
+    "match": "notion-mcp-server",
+    "egress": true
+  },
+  {
+    "match": "mcp-server-supabase",
+    "egress": true,
+    "db_read": true
+  },
+  {
+    "match": "server-postgres",
+    "egress": true,
+    "db_read": true
+  },
+  {
+    "match": "server-sqlite",
+    "egress": false,
+    "db_read": true
+  },
+  {
+    "match": "server-mysql",
+    "egress": true,
+    "db_read": true
+  },
+  {
+    "match": "server-redis",
+    "egress": true,
+    "db_read": true
+  },
+  {
+    "match": "server-google-maps",
+    "egress": true
+  },
+  {
+    "match": "server-brave-search",
+    "egress": true
+  },
+  {
+    "match": "server-puppeteer",
+    "egress": true
+  },
+  {
+    "match": "playwright-mcp",
+    "egress": true
+  },
+  {
+    "match": "exa-mcp-server",
+    "egress": true
+  },
+  {
+    "match": "firecrawl",
+    "egress": true
+  },
+  {
+    "match": "mcp-server-cloudflare",
+    "egress": true
+  },
+  {
+    "match": "actors-mcp-server",
+    "egress": true
+  },
+  {
+    "match": "server-memory",
+    "egress": false
+  },
+  {
+    "match": "server-sequential-thinking",
+    "egress": false
+  },
+  {
+    "match": "server-everything",
+    "egress": false
+  }
+]

@@ -53,6 +53,27 @@ a bug: the common config shape carries no signals the current rules act on.
 So four of the five rule families are inert on the most common install pattern.
 That is the real finding of this exercise.
 
+## Follow-up implemented (0.1.0, same day)
+
+Both recommendations below are in the tree and verified against a mixed config:
+
+- `crates/mcpscan-core/data/rules/remote-packages.json` maps package names to
+  egress / fs-read / db-read, so `npx` installs now carry capability signals.
+  `@modelcontextprotocol/server-github` gains egress; `server-memory` does not.
+- "Egress plus literal secret" left the HIGH `mcp-exfil-path` composite and is
+  now the MEDIUM `mcp-secret-to-network`.
+
+Re-running the same 17-package config with the new data still reports 0
+findings for those packages — the data changes what the rules *can* see, not
+what these particular configs do wrong. On a mixed config the difference is
+visible:
+
+| Server | Before | After |
+|---|---|---|
+| `server-github` + literal token | literal only | literal (CRITICAL) + `mcp-secret-to-network` (MEDIUM, opt-in) |
+| `server-postgres --read-write` | nothing | `mcp-exfil-path` (HIGH) |
+| `server-memory` | nothing | nothing |
+
 ## Recommendation
 
 Two changes, both small and both needing a product call:

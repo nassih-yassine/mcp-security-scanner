@@ -7,10 +7,11 @@ use crate::rules::{Rule, RuleCtx};
 /// The abilities that make up the path, in a fixed order. `None` when the
 /// combination is not an exfiltration path.
 pub fn exfil_components(caps: &Capabilities) -> Option<Vec<&'static str>> {
-    let read = caps.fs_read || caps.db_read || caps.secret_in_config;
+    // A literal secret is not a read: it moves to `mcp-secret-to-network`.
     // `shell_exec` is every stdio server; counting it made this rule fire on
-    // every first-party server. A write or a literal secret is the real signal.
-    let write = caps.fs_write || caps.db_write || caps.secret_in_config;
+    // every first-party server.
+    let read = caps.fs_read || caps.db_read;
+    let write = caps.fs_write || caps.db_write;
     if !(caps.net_egress && read && write) {
         return None;
     }
@@ -23,9 +24,6 @@ pub fn exfil_components(caps: &Capabilities) -> Option<Vec<&'static str>> {
     }
     if caps.db_read {
         parts.push("db_read");
-    }
-    if caps.secret_in_config {
-        parts.push("secret_in_config");
     }
     if caps.fs_write {
         parts.push("fs_write");
@@ -122,13 +120,13 @@ mod tests {
     }
 
     #[test]
-    fn egress_plus_secret_fires() {
+    fn a_literal_secret_alone_is_not_an_exfil_path() {
         let s = spec_caps(Capabilities {
             net_egress: true,
             secret_in_config: true,
             ..Default::default()
         });
-        assert_eq!(run(&s).len(), 1);
+        assert_eq!(run(&s).len(), 0);
     }
 
     #[test]
@@ -180,14 +178,7 @@ mod tests {
         };
         assert_eq!(
             exfil_components(&caps).unwrap(),
-            vec![
-                "net_egress",
-                "fs_read",
-                "db_read",
-                "secret_in_config",
-                "fs_write",
-                "db_write"
-            ]
+            vec!["net_egress", "fs_read", "db_read", "fs_write", "db_write"]
         );
     }
 }

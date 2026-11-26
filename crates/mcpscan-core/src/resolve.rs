@@ -1,6 +1,37 @@
 //! Deriving what a server can do, and which package it runs.
 
 use crate::model::{Capabilities, PackageRef, Registry, ServerSpec};
+use serde::Deserialize;
+use std::sync::OnceLock;
+
+#[derive(Deserialize)]
+struct RemotePackage {
+    /// Substring matched against the package name.
+    #[serde(rename = "match")]
+    match_: String,
+    #[serde(default)]
+    egress: bool,
+    #[serde(default)]
+    fs_read: bool,
+    #[serde(default)]
+    db_read: bool,
+}
+
+fn remote_packages() -> &'static [RemotePackage] {
+    static PACKAGES: OnceLock<Vec<RemotePackage>> = OnceLock::new();
+    PACKAGES.get_or_init(|| {
+        serde_json::from_str(include_str!("../data/rules/remote-packages.json"))
+            .expect("remote-packages.json is embedded and valid")
+    })
+}
+
+/// What a known package is expected to reach.
+fn known_package(spec: &ServerSpec) -> Option<&'static RemotePackage> {
+    let name = spec.pkg.as_ref()?.name.as_str();
+    remote_packages()
+        .iter()
+        .find(|entry| name.contains(entry.match_.as_str()))
+}
 
 const DB_HINTS: [&str; 8] = [
     "supabase", "postgres", "mysql", "sqlite", "redis", "mongo", "database", "neon",
@@ -83,6 +114,11 @@ pub fn capabilities(spec: &ServerSpec) -> Capabilities {
     // A package runner downloads its package, but that is not egress the server
     // controls. Count only a url, an http(s) value, or a listening port.
     caps.net_egress = spec.url.is_some() || text_has_scheme || port_flag;
+    if let Some(known) = known_package(spec) {
+        caps.net_egress |= known.egress;
+        caps.fs_read |= known.fs_read;
+        caps.db_read |= known.db_read;
+    }
     caps.shell_exec = spec.command.is_some();
 
     let haystack = format!(
@@ -281,6 +317,20 @@ mod tests {
         );
         resolve(&mut write);
         assert!(write.capabilities.fs_write);
+    }
+
+    #[test]
+    fn known_remote_packages_gain_egress() {
+        let mut github = spec_with(
+            "npx",
+            &["-y", "@modelcontextprotocol/server-github@2025.4.8"],
+        );
+        resolve(&mut github);
+        assert!(github.capabilities.net_egress);
+
+        let mut memory = spec_with("npx", &["-y", "@modelcontextprotocol/server-memory@2.2.1"]);
+        resolve(&mut memory);
+        assert!(!memory.capabilities.net_egress);
     }
 
     #[test]
