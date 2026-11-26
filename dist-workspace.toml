@@ -24,7 +24,7 @@ github-attestations = true
 # Pin every action the generated workflow uses; Dependabot ignores the generated
 # file, so update these here and regenerate.
 [dist.github-action-commits]
-"actions/checkout" = "11d5960a326750d5838078e36cf38b85af677262"
-"actions/upload-artifact" = "ea165f8d65b6e75b540449e92b4886f43607fa02"
-"actions/download-artifact" = "d3f86a106a0bac45b974a628896c90dbdf5c8093"
-"actions/attest" = "67422f5511b7ff725f4dbd6fb9bd2cd925c65a8d"
+"actions/checkout" = "d23441a48e516b6c34aea4fa41551a30e30af803"
+"actions/upload-artifact" = "cf430e030ddbb5b0abf93d22962f4752f3646cd9"
+"actions/download-artifact" = "9000827ccba6bdab643e8b6fd33ac0654aef8333"
+"actions/attest" = "1e69f48acb82d1966a394da916b4c1698aa569d6"
