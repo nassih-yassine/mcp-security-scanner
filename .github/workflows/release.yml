@@ -152,6 +152,8 @@ jobs:
         uses: actions/attest@11bbd243972067817e9ed160cb123cab3601f436
         with:
           subject-path: "target/distrib/*${{ join(matrix.targets, ', ') }}*"
+          # Required by actions/attest v2; cargo-dist 0.34 omits it.
+          predicate-type: "https://slsa.dev/provenance/v1"
       - id: cargo-dist
         name: Post-build
         # We force bash here just because github makes it really hard to get values up

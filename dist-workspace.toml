@@ -6,14 +6,17 @@ members = ["cargo:."]
 [dist]
 cargo-dist-version = "0.34.0"
 ci = "github"
-# Generated release.yml is hand-edited for permissions; never regenerate blindly.
+# Generated release.yml is hand-edited (permissions, attest predicate); never
+# regenerate blindly.
 allow-dirty = ["ci"]
 installers = ["shell", "powershell"]
+# Only targets that build natively on GitHub runners. musl and aarch64-linux
+# need a cross linker cargo-dist does not install; add them with zigbuild when
+# a user needs Alpine or ARM Linux.
 targets = [
   "aarch64-apple-darwin",
-  "aarch64-unknown-linux-musl",
   "x86_64-apple-darwin",
-  "x86_64-unknown-linux-musl",
+  "x86_64-unknown-linux-gnu",
   "x86_64-pc-windows-msvc",
 ]
 github-attestations = true
