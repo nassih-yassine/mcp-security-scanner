@@ -125,10 +125,11 @@ fn candidates(spec: &ServerSpec) -> Vec<Candidate<'_>> {
     out
 }
 
+type Meta = (&'static str, Severity, Confidence);
+
 fn finding(
     spec: &ServerSpec,
-    rule_id: &'static str,
-    confidence: Confidence,
+    (rule_id, severity, confidence): Meta,
     message: String,
     pointer: String,
     kind: &'static str,
@@ -136,7 +137,7 @@ fn finding(
 ) -> Finding {
     Finding::new(
         rule_id,
-        Severity::Critical,
+        severity,
         confidence,
         message,
         Location {
@@ -159,8 +160,7 @@ fn run_literal(spec: &ServerSpec, _ctx: &RuleCtx) -> Vec<Finding> {
             let family = looks_like_secret(c.value)?;
             Some(finding(
                 spec,
-                LITERAL_ID,
-                Confidence::High,
+                (LITERAL_ID, Severity::Critical, Confidence::High),
                 format!("literal credential ({family}) in {kind}", kind = c.kind),
                 c.pointer,
                 c.kind,
@@ -179,8 +179,7 @@ fn run_entropy(spec: &ServerSpec, _ctx: &RuleCtx) -> Vec<Finding> {
         .map(|c| {
             finding(
                 spec,
-                ENTROPY_ID,
-                Confidence::Medium,
+                (ENTROPY_ID, Severity::High, Confidence::Medium),
                 format!("high-entropy value in {kind}", kind = c.kind),
                 c.pointer,
                 c.kind,

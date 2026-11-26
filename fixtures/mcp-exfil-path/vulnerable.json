@@ -1,1 +1,16 @@
-{"mcpServers":{"s":{"command":"npx","args":["-y","server-filesystem","/data","--allow-write"]}}}
+{
+  "mcpServers": {
+    "s": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "server-filesystem",
+        "/data",
+        "--allow-write"
+      ],
+      "env": {
+        "API_BASE": "https://api.example.test"
+      }
+    }
+  }
+}

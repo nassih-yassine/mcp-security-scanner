@@ -2,16 +2,11 @@
 
 use crate::model::{Capabilities, PackageRef, Registry, ServerSpec};
 
-const RUNNERS: [&str; 12] = [
-    "npx", "bunx", "pnpm", "yarn", "uvx", "pipx", "docker", "podman", "deno", "node", "python",
-    "python3",
-];
-
 const DB_HINTS: [&str; 8] = [
     "supabase", "postgres", "mysql", "sqlite", "redis", "mongo", "database", "neon",
 ];
 
-const FS_HINTS: [&str; 5] = ["filesystem", "file-system", "fs", "git", "docs"];
+const FS_HINTS: [&str; 4] = ["filesystem", "file-system", "server-fs", "server-git"];
 
 /// Fill in `pkg` and `capabilities` from the raw config.
 pub fn resolve(spec: &mut ServerSpec) {
@@ -73,8 +68,6 @@ pub fn package_ref(spec: &ServerSpec) -> Option<PackageRef> {
 /// What the server can reach or modify, inferred from config only.
 pub fn capabilities(spec: &ServerSpec) -> Capabilities {
     let mut caps = Capabilities::default();
-    let base = spec.command.as_deref().map(basename);
-    let runner = base.is_some_and(|b| RUNNERS.contains(&b));
 
     let text_has_scheme = spec
         .args
@@ -87,8 +80,9 @@ pub fn capabilities(spec: &ServerSpec) -> Capabilities {
         .iter()
         .any(|a| a == "--port" || a.starts_with("--port=") || a == "--host");
 
-    caps.net_egress =
-        spec.url.is_some() || text_has_scheme || (runner && spec.command.is_some()) || port_flag;
+    // A package runner downloads its package, but that is not egress the server
+    // controls. Count only a url, an http(s) value, or a listening port.
+    caps.net_egress = spec.url.is_some() || text_has_scheme || port_flag;
     caps.shell_exec = spec.command.is_some();
 
     let haystack = format!(
@@ -111,7 +105,6 @@ pub fn capabilities(spec: &ServerSpec) -> Capabilities {
     caps.db_write = spec
         .args
         .iter()
-        .chain(spec.env.values())
         .chain(spec.declared_scopes.iter())
         .any(|v| {
             let v = v.to_ascii_lowercase();
@@ -120,6 +113,22 @@ pub fn capabilities(spec: &ServerSpec) -> Capabilities {
                 || v.contains("admin")
                 || v == "rw"
                 || v == "*"
+        });
+    caps.secret_in_config = spec
+        .env
+        .values()
+        .chain(spec.headers.values())
+        .chain(spec.args.iter())
+        .any(|v| crate::rules::secret::looks_like_secret(v).is_some())
+        || spec.url.as_deref().is_some_and(|url| {
+            url.split_once('?').is_some_and(|(_, query)| {
+                crate::rules::secret::looks_like_secret(query).is_some()
+                    || query.split('&').any(|pair| {
+                        pair.split_once('=').is_some_and(|(_, v)| {
+                            crate::rules::secret::looks_like_secret(v).is_some()
+                        })
+                    })
+            })
         });
     caps
 }
@@ -198,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn stdio_launch_infers_shell_exec_and_egress() {
+    fn a_package_runner_alone_is_not_egress() {
         let mut s = spec_with(
             "npx",
             &[
@@ -209,7 +218,7 @@ mod tests {
         );
         resolve(&mut s);
         assert!(s.capabilities.shell_exec);
-        assert!(s.capabilities.net_egress);
+        assert!(!s.capabilities.net_egress);
         assert!(s.capabilities.fs_read);
     }
 
@@ -272,6 +281,27 @@ mod tests {
         );
         resolve(&mut write);
         assert!(write.capabilities.fs_write);
+    }
+
+    #[test]
+    fn literal_secret_sets_the_exfil_read_leg() {
+        let mut s = spec_with("npx", &["-y", "some-server"]);
+        s.env.insert(
+            "TOKEN".into(),
+            "ghp_1234567890abcdefghijklmnopqrstuvwx".into(),
+        );
+        resolve(&mut s);
+        assert!(s.capabilities.secret_in_config);
+    }
+
+    #[test]
+    fn admin_email_does_not_mean_db_write() {
+        let mut s = spec_with("npx", &["-y", "server-postgres"]);
+        s.env
+            .insert("ADMIN_EMAIL".into(), "ops@example.test".into());
+        resolve(&mut s);
+        assert!(s.capabilities.db_read);
+        assert!(!s.capabilities.db_write);
     }
 
     #[test]

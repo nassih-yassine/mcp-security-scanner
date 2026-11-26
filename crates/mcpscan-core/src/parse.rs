@@ -301,6 +301,25 @@ fn parse_toml(src: &str, path: &Path) -> Result<ParsedConfig, ParseError> {
                     .collect()
             })
             .unwrap_or_default();
+        let env = get("env")
+            .and_then(|i| i.as_table_like())
+            .map(|table| {
+                table
+                    .iter()
+                    .filter_map(|(k, v)| v.as_str().map(|s| (k.to_string(), s.to_string())))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let headers = get("headers")
+            .or_else(|| get("http_headers"))
+            .and_then(|i| i.as_table_like())
+            .map(|table| {
+                table
+                    .iter()
+                    .filter_map(|(k, v)| v.as_str().map(|s| (k.to_string(), s.to_string())))
+                    .collect()
+            })
+            .unwrap_or_default();
         let transport = if url.is_some() {
             Transport::Http
         } else {
@@ -318,9 +337,9 @@ fn parse_toml(src: &str, path: &Path) -> Result<ParsedConfig, ParseError> {
             transport,
             command,
             args,
-            env: BTreeMap::new(),
+            env,
             url,
-            headers: BTreeMap::new(),
+            headers,
             pkg: None,
             tools: Vec::new(),
             declared_scopes: Vec::new(),

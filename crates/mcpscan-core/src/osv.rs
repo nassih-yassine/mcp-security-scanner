@@ -126,11 +126,9 @@ impl OsvClient {
                 self.write_cache(&key, &text);
                 Ok(text)
             }
-            // A network failure may reuse stale data; a 404 never does.
-            Err(err) => match self.read_cache(&key, false) {
-                Some(stale) => Ok(stale),
-                None => Err(OsvError::Request(err.to_string())),
-            },
+            // Expired cache is never presented as a completed check: the scan
+            // reports "could not check advisories" instead.
+            Err(err) => Err(OsvError::Request(err.to_string())),
         }
     }
 

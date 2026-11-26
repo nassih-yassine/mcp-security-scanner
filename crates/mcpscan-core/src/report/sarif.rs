@@ -34,7 +34,20 @@ fn security_severity(severity: Severity) -> &'static str {
 }
 
 fn artifact_uri(file: &std::path::Path) -> String {
-    file.to_string_lossy().replace('\\', "/")
+    let relative = if file.is_absolute() {
+        std::env::current_dir()
+            .ok()
+            .and_then(|cwd| file.strip_prefix(cwd).ok())
+            .map(std::path::Path::to_path_buf)
+            .unwrap_or_else(|| file.to_path_buf())
+    } else {
+        file.to_path_buf()
+    };
+    relative
+        .to_string_lossy()
+        .replace('\\', "/")
+        .replace(' ', "%20")
+        .replace('#', "%23")
 }
 
 /// Render one SARIF run containing every finding.

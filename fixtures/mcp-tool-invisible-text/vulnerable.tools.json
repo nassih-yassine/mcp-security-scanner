@@ -1,0 +1,11 @@
+{
+  "tools": [
+    {
+      "name": "read_file",
+      "description": "Read a file\u200bplease",
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ]
+}

@@ -184,3 +184,86 @@ fn markdown_format_reports_a_grade() {
     let text = String::from_utf8_lossy(&out.stdout);
     assert!(text.starts_with("## MCP security score: "));
 }
+
+#[test]
+fn a_wrong_shaped_container_exits_three() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join(".mcp.json"), r#"{"mcpServers":[]}"#).unwrap();
+    bin()
+        .args(["scan", dir.path().to_str().unwrap()])
+        .assert()
+        .code(3)
+        .stderr(predicate::str::contains("mcpServers"));
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_directory_exits_three() {
+    let dir = tempfile::tempdir().unwrap();
+    let locked = dir.path().join(".cursor");
+    std::fs::create_dir(&locked).unwrap();
+    std::fs::write(locked.join("mcp.json"), b"{\"mcpServers\":{}}").unwrap();
+    let mut perms = std::fs::metadata(&locked).unwrap().permissions();
+    std::os::unix::fs::PermissionsExt::set_mode(&mut perms, 0o000);
+    std::fs::set_permissions(&locked, perms).unwrap();
+    let result = bin()
+        .args(["scan", dir.path().to_str().unwrap()])
+        .assert()
+        .code(3);
+    let mut perms = std::fs::metadata(&locked).unwrap().permissions();
+    std::os::unix::fs::PermissionsExt::set_mode(&mut perms, 0o755);
+    let _ = std::fs::set_permissions(&locked, perms);
+    drop(result);
+}
+
+#[cfg(unix)]
+#[test]
+fn a_dangling_symlink_exits_three() {
+    let dir = tempfile::tempdir().unwrap();
+    std::os::unix::fs::symlink("missing.json", dir.path().join(".mcp.json")).unwrap();
+    bin()
+        .args(["scan", dir.path().to_str().unwrap()])
+        .assert()
+        .code(3)
+        .stderr(predicate::str::contains(".mcp.json"));
+}
+
+#[test]
+fn allow_prefix_respects_a_path_boundary() {
+    // fixtures/demo is allowed; fixtures/demo-prod is a different directory.
+    bin()
+        .args([
+            "scan",
+            "fixtures/demo",
+            "fixtures/demo-prod",
+            "--allow",
+            "mcp-secret-literal:fixtures/demo=test fixture",
+        ])
+        .assert()
+        .code(2);
+}
+
+#[test]
+fn invalid_utf8_env_exits_three() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join(".env"), b"TOKEN=\xff\xfe\n").unwrap();
+    bin()
+        .args(["scan", dir.path().to_str().unwrap()])
+        .assert()
+        .code(3)
+        .stderr(predicate::str::contains(".env"));
+}
+
+#[test]
+fn no_raw_secret_in_any_format() {
+    let secret = "ghp_1234567890abcdefghijklmnopqrstuvwx";
+    for format in ["human", "json", "sarif", "markdown"] {
+        let out = bin()
+            .args(["scan", "fixtures/demo", "--format", format])
+            .output()
+            .unwrap();
+        let text = String::from_utf8_lossy(&out.stdout);
+        assert!(!text.contains(secret), "raw secret in --format {format}");
+        assert!(text.contains("ghp_…uvwx"), "no redacted shape in {format}");
+    }
+}

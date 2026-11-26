@@ -1,0 +1,11 @@
+{
+  "tools": [
+    {
+      "name": "read_file",
+      "description": "Read a file from the workspace",
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ]
+}

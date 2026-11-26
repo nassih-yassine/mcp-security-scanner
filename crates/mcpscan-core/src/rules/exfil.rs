@@ -8,7 +8,9 @@ use crate::rules::{Rule, RuleCtx};
 /// combination is not an exfiltration path.
 pub fn exfil_components(caps: &Capabilities) -> Option<Vec<&'static str>> {
     let read = caps.fs_read || caps.db_read || caps.secret_in_config;
-    let write = caps.fs_write || caps.db_write || caps.shell_exec || caps.secret_in_config;
+    // `shell_exec` is every stdio server; counting it made this rule fire on
+    // every first-party server. A write or a literal secret is the real signal.
+    let write = caps.fs_write || caps.db_write || caps.secret_in_config;
     if !(caps.net_egress && read && write) {
         return None;
     }
@@ -30,9 +32,6 @@ pub fn exfil_components(caps: &Capabilities) -> Option<Vec<&'static str>> {
     }
     if caps.db_write {
         parts.push("db_write");
-    }
-    if caps.shell_exec {
-        parts.push("shell_exec");
     }
     Some(parts)
 }
@@ -133,6 +132,17 @@ mod tests {
     }
 
     #[test]
+    fn a_command_alone_is_not_a_write_leg() {
+        let s = spec_caps(Capabilities {
+            net_egress: true,
+            fs_read: true,
+            shell_exec: true,
+            ..Default::default()
+        });
+        assert_eq!(run(&s).len(), 0);
+    }
+
+    #[test]
     fn read_only_server_is_silent() {
         let s = spec_caps(Capabilities {
             fs_read: true,
@@ -152,7 +162,7 @@ mod tests {
             ..Default::default()
         });
         let f = run(&s);
-        for part in ["net_egress", "db_read", "db_write", "shell_exec"] {
+        for part in ["net_egress", "db_read", "db_write"] {
             assert!(f[0].message.contains(part), "{}", f[0].message);
         }
     }
@@ -176,8 +186,7 @@ mod tests {
                 "db_read",
                 "secret_in_config",
                 "fs_write",
-                "db_write",
-                "shell_exec"
+                "db_write"
             ]
         );
     }

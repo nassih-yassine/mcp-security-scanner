@@ -5,17 +5,14 @@ leaked credentials, over-broad permissions and prompt-injection surfaces before
 an agent gets them.
 
 ```console
-$ mcpscan scan .
-MCP security scan: 1 server(s), 2 finding(s)
+$ mcpscan scan fixtures/demo
+MCP security scan: 1 server(s), 1 finding(s)
 
 fixtures/demo/.mcp.json
   CRITICAL mcp-secret-literal  literal credential (github-pat) in env-value
     at /mcpServers/github/env/GITHUB_TOKEN:3:15
     evidence: ghp_…uvwx (38)
     fix: Move the credential to an environment variable and rotate it.
-  HIGH     mcp-exfil-path  server combines net_egress, fs_read, shell_exec
-    at /mcpServers/github:3:15
-    fix: Split read and write into different servers, or remove network egress from the one that writes.
 ```
 
 ## Who it is for
@@ -50,6 +47,7 @@ There is no `npm audit` for agent tool permissions. This is that.
 | `mcp-tool-invisible-text` | high | high |
 | `mcp-tool-schema-mismatch` | medium | medium |
 | `mcp-tool-shadowing` | medium | medium |
+| `mcp-url-untrusted-endpoint` | high | high |
 <!-- END RULES -->
 
 
@@ -72,6 +70,7 @@ mcpscan scan . --format sarif  # for GitHub code scanning
 mcpscan scan . --user          # also per-user Claude/Cursor/Codex configs
 mcpscan scan . --online        # also check pinned packages against OSV
 mcpscan rules                  # what this build can report
+mcpscan scan . --tools-dir ./tools  # also inspect cached tool schemas
 ```
 
 Scan a repo in CI:
@@ -124,8 +123,9 @@ A missing reason is a usage error (exit `3`). The finding stays visible, marked
 - **Scanned servers are never executed.** Config commands are read, never run.
 - **Scanned URLs are never fetched.** A config pointing at
   `169.254.169.254` produces a finding, not a request.
-- **Secrets are never printed.** Findings carry a redacted shape (first four,
-  last four, length). A test fails if a fixture secret reaches any output.
+- **Secrets are never printed, in any format.** Findings and the JSON `servers`
+  block carry a redacted shape only (first four, last four, length). A test fails
+  if a fixture secret reaches human, JSON, SARIF or Markdown output.
 
 ## Scope limits
 
@@ -133,6 +133,15 @@ A missing reason is a usage error (exit `3`). The finding stays visible, marked
 to a server, does not introspect a running server, and does not replace a
 runtime agent firewall. A clean scan means the configuration has no known
 problem — not that the server is safe to run.
+
+Discovery is per directory: each path you pass is checked for the standard
+config files (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, …), plus the
+per-user locations with `--user`. Monorepo subpackages and nested fixtures are
+not walked; pass those directories explicitly.
+
+Tool-description rules (`mcp-tool-*`) need the schemas: pass `--tools-dir` with
+one `<server-name>.json` per server, shaped
+`{"tools":[{"name","description","inputSchema"}]}`.
 
 ## Documentation
 

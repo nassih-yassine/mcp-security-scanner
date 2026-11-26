@@ -102,7 +102,7 @@ pub enum ScanError {
 /// Scan every root and return one deterministic report.
 pub fn scan(opts: &ScanOptions) -> Result<ScanReport, ScanError> {
     let mut servers = Vec::new();
-    let mut skipped = Vec::new();
+    let mut skipped: Vec<Skipped> = Vec::new();
 
     for root in &opts.roots {
         if !root.exists() {
@@ -114,15 +114,49 @@ pub fn scan(opts: &ScanOptions) -> Result<ScanReport, ScanError> {
             include_history: opts.include_history,
         });
         for path in discovered {
-            if !path.exists() || path.is_dir() {
-                continue;
+            // `exists()` is false for a permission error and for a dangling
+            // symlink, which would turn an unscannable config into a pass.
+            match std::fs::symlink_metadata(&path) {
+                Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(err) => {
+                    return Err(ScanError::Unreadable {
+                        path: path.clone(),
+                        message: err.to_string(),
+                    });
+                }
+                Ok(meta) if meta.is_dir() => continue,
+                Ok(meta) if meta.file_type().is_symlink() => match std::fs::metadata(&path) {
+                    Ok(target) if target.is_file() => {}
+                    Ok(_) => continue,
+                    Err(err) => {
+                        return Err(ScanError::Unreadable {
+                            path: path.clone(),
+                            message: format!("dangling symlink: {err}"),
+                        });
+                    }
+                },
+                Ok(_) => {}
             }
             if is_env_like(&path) {
+                let meta = std::fs::metadata(&path).map_err(|e| ScanError::Unreadable {
+                    path: path.clone(),
+                    message: e.to_string(),
+                })?;
+                if meta.len() > crate::parse::MAX_CONFIG_BYTES {
+                    return Err(ScanError::Unreadable {
+                        path: path.clone(),
+                        message: format!("larger than {} bytes", crate::parse::MAX_CONFIG_BYTES),
+                    });
+                }
                 let bytes = std::fs::read(&path).map_err(|e| ScanError::Unreadable {
                     path: path.clone(),
                     message: e.to_string(),
                 })?;
-                servers.push(kv_server(&path, &String::from_utf8_lossy(&bytes)));
+                let text = String::from_utf8(bytes).map_err(|_| ScanError::Unreadable {
+                    path: path.clone(),
+                    message: "not valid UTF-8".to_string(),
+                })?;
+                servers.push(kv_server(&path, &text));
                 continue;
             }
             match parse::parse_file(&path) {
@@ -131,10 +165,15 @@ pub fn scan(opts: &ScanOptions) -> Result<ScanReport, ScanError> {
                         resolve::resolve(&mut server);
                         servers.push(server);
                     }
-                    for unreadable in parsed.unreadable {
-                        skipped.push(Skipped {
-                            file: unreadable.file,
-                            reason: unreadable.reason,
+                    if let Some(unreadable) = parsed.unreadable.first() {
+                        return Err(ScanError::Unreadable {
+                            path: path.clone(),
+                            message: format!(
+                                "{} at {}: {}",
+                                unreadable.reason,
+                                unreadable.pointer,
+                                unreadable.file.display()
+                            ),
                         });
                     }
                 }
@@ -218,13 +257,22 @@ pub fn scan(opts: &ScanOptions) -> Result<ScanReport, ScanError> {
 fn apply_allow(findings: &mut [Finding], allow: &[AllowEntry]) {
     for finding in findings.iter_mut() {
         let file = finding.location.file.to_string_lossy();
-        let hit = allow
-            .iter()
-            .find(|entry| entry.rule_id == finding.rule_id && file.starts_with(&entry.path_prefix));
+        let hit = allow.iter().find(|entry| {
+            entry.rule_id == finding.rule_id && path_matches(&file, &entry.path_prefix)
+        });
         if let Some(entry) = hit {
             finding.severity = Severity::Low;
             finding.message = format!("{} (allowed: {})", finding.message, entry.reason);
         }
+    }
+}
+
+/// Prefix match on a path boundary: `fixtures/demo` must not cover
+/// `fixtures/demo-prod`.
+fn path_matches(file: &str, prefix: &str) -> bool {
+    match file.strip_prefix(prefix) {
+        Some(rest) => rest.is_empty() || rest.starts_with('/') || rest.starts_with('\\'),
+        None => false,
     }
 }
 

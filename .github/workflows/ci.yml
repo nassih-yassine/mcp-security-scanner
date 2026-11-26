@@ -51,15 +51,16 @@ jobs:
       - run: cargo install cargo-deny --locked
       - run: cargo deny check
 
-  # A scanner that does not scan itself has no credibility. Findings in the
-  # fixtures are expected; the demo secret is the only critical one, so it is
-  # explicitly allowed with a reason.
+  # A scanner that does not scan itself has no credibility. The fixture
+  # secrets are expected; they are allowed with a reason and the default gate,
+  # so a new, unallowed finding on these configs fails the build.
   dogfood:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - run: |
-          out=$(cargo run -q -p mcpscan -- scan fixtures/demo --fail-on none)
+          out=$(cargo run -q -p mcpscan -- scan fixtures/demo fixtures/demo-prod \
+            --allow "mcp-secret-literal:fixtures=test fixtures")
           echo "$out"
           echo "$out" | grep -q "mcp-secret-literal"
 

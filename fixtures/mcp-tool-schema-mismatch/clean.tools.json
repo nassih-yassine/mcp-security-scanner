@@ -1,0 +1,16 @@
+{
+  "tools": [
+    {
+      "name": "do_thing",
+      "description": "Read-only lookup",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

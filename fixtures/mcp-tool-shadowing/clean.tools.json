@@ -1,0 +1,18 @@
+{
+  "tools": [
+    {
+      "name": "read_file",
+      "description": "Read a file.",
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Write a file.",
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ]
+}

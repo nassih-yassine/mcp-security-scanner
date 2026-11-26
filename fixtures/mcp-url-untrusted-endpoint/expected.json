@@ -1,0 +1,9 @@
+{
+  "findings": [
+    {
+      "rule_id": "mcp-url-untrusted-endpoint",
+      "severity": "high",
+      "pointer": "/mcpServers/s/url"
+    }
+  ]
+}

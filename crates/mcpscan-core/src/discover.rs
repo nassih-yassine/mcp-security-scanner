@@ -47,7 +47,7 @@ impl Default for DiscoverOptions {
     }
 }
 
-const PROJECT_PATHS: [&str; 9] = [
+const PROJECT_PATHS: [&str; 13] = [
     ".mcp.json",
     "mcp.json",
     "mcp_config.json",
@@ -57,6 +57,10 @@ const PROJECT_PATHS: [&str; 9] = [
     ".zed/settings.json",
     ".claude/settings.json",
     ".env",
+    ".env.production",
+    ".env.development",
+    ".env.staging",
+    ".env.test",
 ];
 
 /// All candidate paths for one scan, in a stable order.

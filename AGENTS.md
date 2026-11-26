@@ -10,7 +10,7 @@ out, CI-ready.
   **Do not rewrite it.**
 - `SPEC.md` = engineering spec. **Source of truth for how.**
 - Workspace is live: `mcpscan-core` (lib), `mcpscan` (bin), `xtask` (docs).
-  10 rules, four report formats, offline by default, OSV behind `--online`.
+  11 rules, four report formats, offline by default, OSV behind `--online`.
 - Public repo: https://github.com/nassih-yassine/mcp-security-scanner
 - `dep-vet` is out of scope: no Cargo dependency on it, no porting its modules.
   Owner decision; revisit only on request (`SPEC.md` §9 Q4).

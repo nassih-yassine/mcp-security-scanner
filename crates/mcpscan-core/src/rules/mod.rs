@@ -5,6 +5,7 @@ pub mod osv;
 pub mod scope;
 pub mod secret;
 pub mod tool;
+pub mod url;
 
 use crate::model::{Confidence, Finding, ServerSpec};
 use std::collections::BTreeMap;
@@ -65,6 +66,7 @@ static RULES: &[Rule] = &[
     tool::mcp_tool_invisible_text(),
     tool::mcp_tool_schema_mismatch(),
     tool::mcp_tool_shadowing(),
+    url::mcp_url_untrusted_endpoint(),
 ];
 
 /// Every registered rule, in id order.
