@@ -59,7 +59,6 @@ Every rule has a page under [`docs/rules/`](docs/rules/) with an example and a f
 cargo install mcpscan --locked          # from source
 cargo binstall mcpscan                  # prebuilt binary
 brew install nassih-yassine/tap/mcpscan # Homebrew (once the tap is published)
-npx mcpscan                             # Node users
 ```
 
 ## Quickstart

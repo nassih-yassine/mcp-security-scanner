@@ -30,7 +30,7 @@ attests the artifacts. A token-created release never starts other workflows, so
 
 1. Approve the `crates-io` environment deployment.
 2. Smoke test from a clean container:
-   `cargo binstall mcpscan --version` and `npx mcpscan --version`.
+   `cargo binstall mcpscan --version`, and run the action against a scratch repo.
 3. Update the GitHub About description if the one-liner changed.
 4. Publish the release notes from `CHANGELOG.md`.
 
