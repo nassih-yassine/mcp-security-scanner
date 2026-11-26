@@ -18,7 +18,7 @@ jobs:
       - name: Conventional commits
         run: |
           bad=0
-          for subject in $(git log --format=%s -n 20); do
+          while IFS= read -r subject; do
             case "$subject" in
               "Merge "*|"Revert "*) continue ;;
             esac
@@ -26,5 +26,5 @@ jobs:
               echo "::error::not a conventional commit subject: $subject"
               bad=1
             fi
-          done
+          done < <(git log --format=%s -n 20)
           exit "$bad"
