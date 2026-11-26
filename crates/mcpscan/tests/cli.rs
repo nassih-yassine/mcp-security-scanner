@@ -34,6 +34,7 @@ fn missing_path_exits_three() {
         .stderr(predicate::str::contains("does/not/exist"));
 }
 
+#[cfg(unix)]
 #[test]
 fn unreadable_file_exits_three_and_names_it() {
     let dir = tempfile::tempdir().unwrap();
