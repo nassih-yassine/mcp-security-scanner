@@ -1,0 +1,27 @@
+[workspace]
+members = ["cargo:."]
+
+# cargo-dist config. `release.yml` is generated, then hand-edited for
+# least-privilege permissions. Regenerate only when upgrading dist.
+[dist]
+cargo-dist-version = "0.34.0"
+ci = "github"
+# Generated release.yml is hand-edited for permissions; never regenerate blindly.
+allow-dirty = ["ci"]
+installers = ["shell", "powershell"]
+targets = [
+  "aarch64-apple-darwin",
+  "aarch64-unknown-linux-musl",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-musl",
+  "x86_64-pc-windows-msvc",
+]
+github-attestations = true
+
+# Pin every action the generated workflow uses; Dependabot ignores the generated
+# file, so update these here and regenerate.
+[dist.github-action-commits]
+"actions/checkout" = "11d5960a326750d5838078e36cf38b85af677262"
+"actions/upload-artifact" = "ea165f8d65b6e75b540449e92b4886f43607fa02"
+"actions/download-artifact" = "d3f86a106a0bac45b974a628896c90dbdf5c8093"
+"actions/attest" = "11bbd243972067817e9ed160cb123cab3601f436"
