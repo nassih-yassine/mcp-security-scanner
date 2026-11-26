@@ -76,7 +76,7 @@ pub fn score(findings: &[Finding]) -> u8 {
         }
         penalty += f64::from(weight(finding.severity)) * multiplier(finding.confidence);
     }
-    (100.0 - penalty).clamp(0.0, 100.0) as u8
+    (100.0 - penalty).clamp(0.0, 100.0).round() as u8
 }
 
 /// Map a score to a letter grade.
@@ -135,6 +135,17 @@ mod tests {
             .map(|_| f(Severity::Critical, Confidence::High))
             .collect();
         assert_eq!(score(&five), 0);
+    }
+
+    #[test]
+    fn half_points_round_up_instead_of_truncating() {
+        let findings = [
+            f(Severity::High, Confidence::High),
+            f(Severity::High, Confidence::Medium),
+            f(Severity::Low, Confidence::Low),
+        ];
+        assert_eq!(score(&findings), 70);
+        assert_eq!(grade(score(&findings)), Grade::B);
     }
 
     #[test]

@@ -149,11 +149,9 @@ jobs:
           dist build ${{ needs.plan.outputs.tag-flag }} --print=linkage --output-format=json ${{ matrix.dist_args }} > dist-manifest.json
           echo "dist ran successfully"
       - name: Attest
-        uses: actions/attest@11bbd243972067817e9ed160cb123cab3601f436
+        uses: actions/attest@67422f5511b7ff725f4dbd6fb9bd2cd925c65a8d
         with:
           subject-path: "target/distrib/*${{ join(matrix.targets, ', ') }}*"
-          # Required by actions/attest v2; cargo-dist 0.34 omits it.
-          predicate-type: "https://slsa.dev/provenance/v1"
       - id: cargo-dist
         name: Post-build
         # We force bash here just because github makes it really hard to get values up

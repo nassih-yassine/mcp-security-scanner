@@ -11,7 +11,14 @@ pub fn render(report: &ScanReport) -> String {
         report.findings.len()
     ));
     if report.findings.is_empty() {
-        out.push_str("No findings.\n");
+        if report.skipped.is_empty() {
+            out.push_str("No findings.\n");
+        } else {
+            out.push_str(&format!(
+                "No findings, but {} file(s) could not be fully scanned.\n",
+                report.skipped.len()
+            ));
+        }
     }
     let mut current: Option<&std::path::Path> = None;
     for finding in &report.findings {

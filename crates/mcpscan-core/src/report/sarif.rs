@@ -66,12 +66,17 @@ pub fn render(report: &ScanReport, version: &str) -> Result<String, serde_json::
         .keys()
         .copied()
         .map(|id| {
+            let declared = crate::rules::registry()
+                .iter()
+                .find(|rule| rule.id == id)
+                .map(|rule| level(rule.severity))
+                .unwrap_or("warning");
             json!({
                 "id": id,
                 "name": id,
                 "shortDescription": { "text": id },
                 "helpUri": format!("{INFORMATION_URI}/blob/main/docs/rules/{id}.md"),
-                "defaultConfiguration": { "level": "error" },
+                "defaultConfiguration": { "level": declared },
             })
         })
         .collect();
@@ -138,8 +143,12 @@ mod tests {
     use std::path::PathBuf;
 
     fn f(severity: Severity, pointer: &str) -> Finding {
+        f_for("mcp-secret-literal", severity, pointer)
+    }
+
+    fn f_for(rule: &'static str, severity: Severity, pointer: &str) -> Finding {
         Finding::new(
-            "mcp-secret-literal",
+            rule,
             severity,
             Confidence::High,
             "literal credential",
@@ -242,6 +251,17 @@ mod tests {
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0]["id"], "mcp-secret-literal");
         assert_eq!(document["runs"][0]["results"][1]["ruleIndex"], 0);
+    }
+
+    #[test]
+    fn rule_default_level_follows_the_declared_severity() {
+        let document = doc(vec![f_for(
+            "mcp-tool-schema-mismatch",
+            Severity::Medium,
+            "/a",
+        )]);
+        let rule = &document["runs"][0]["tool"]["driver"]["rules"][0];
+        assert_eq!(rule["defaultConfiguration"]["level"], "warning");
     }
 
     #[test]
