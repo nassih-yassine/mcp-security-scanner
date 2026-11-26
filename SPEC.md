@@ -387,9 +387,9 @@ Channels, each its own workflow:
 
 | Channel | Trigger | Gate |
 |---|---|---|
-| GitHub Release + binaries | tag `vX.Y.Z` pushed to `main` | cargo-dist builds 7 targets, shell+powershell installers, SLSA attestations |
+| GitHub Release + binaries | tag `vX.Y.Z` pushed to `main` | cargo-dist builds 4 native targets (x86_64 linux gnu, both macOS, x86_64 windows), shell+powershell installers, SLSA attestations |
 | crates.io | `workflow_run` of Release (token-created releases don't start workflows) | `crates-io` environment with required reviewers; tag must equal `[workspace.package] version` |
-| npm (`npx mcpscan`) | same | `npm-publish` environment |
+| npm (`npx mcpscan`) | deferred | needs platform packages; cargo-dist emits `.tar.xz`, which Node cannot extract without extra deps |
 | Homebrew tap / AUR / `.deb`/`.rpm`/`.apk` | phase 3 | nfpm from attested musl archives, no maintainer scripts |
 | Docker | phase 3, only on demand | distroless, `--sbom`, `--provenance`, cosign keyless |
 | GitHub Action | every release | composite, downloads the pinned release binary, **no third-party actions** |
@@ -460,7 +460,7 @@ CI keeps `--locked` on clippy and test, or it can pass on versions absent from
 | 0. Validation (~2 days, no code) | hand-scan 30 popular MCP servers with grep + checklist, publish aggregates | findings are real and non-obvious |
 | 1. Walking skeleton (~1 week) | discover + parse + `mcp-secret-*` + human/SARIF output, crates.io publish | `mcpscan scan .` works on all config shapes |
 | 2. Substance (~1 week) | `mcp-scope-*`, `mcp-tool-*`, `mcp-osv-*` behind `--online`, scoring, gate | a stranger reproduces the "top 100 servers" run |
-| 3. Distribution (~1 week) | `action.yml`, brew/npm/nfpm channels, README with real output, Show HN draft | Action in Marketplace search |
+| 3. Distribution (~1 week) | `action.yml`, release binaries, README with real output, Show HN draft; brew/npm/nfpm after | Action in Marketplace search |
 | 4. Hosted (gated) | GitHub App PR comments, dashboard, paid tier | only after `AGENT.md` kill criteria pass |
 
 ---

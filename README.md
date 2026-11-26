@@ -55,11 +55,31 @@ Every rule has a page under [`docs/rules/`](docs/rules/) with an example and a f
 
 ## Install
 
+Prebuilt binaries are on the [releases page](https://github.com/nassih-yassine/mcp-security-scanner/releases):
+download the archive for your platform and put `mcpscan` on your `PATH`.
+
+| Platform | Archive |
+|---|---|
+| Linux x86_64 | `mcpscan-x86_64-unknown-linux-gnu.tar.xz` |
+| macOS arm64 | `mcpscan-aarch64-apple-darwin.tar.xz` |
+| macOS x86_64 | `mcpscan-x86_64-apple-darwin.tar.xz` |
+| Windows x86_64 | `mcpscan-x86_64-pc-windows-msvc.zip` |
+
 ```bash
-cargo install mcpscan --locked          # from source
-cargo binstall mcpscan                  # prebuilt binary
-brew install nassih-yassine/tap/mcpscan # Homebrew (once the tap is published)
+curl -fsSL -o mcpscan.tar.xz \
+  https://github.com/nassih-yassine/mcp-security-scanner/releases/download/v0.1.0/mcpscan-x86_64-unknown-linux-gnu.tar.xz
+tar -xJf mcpscan.tar.xz && sudo install mcpscan-x86_64-unknown-linux-gnu/mcpscan /usr/local/bin/
 ```
+
+From source (needs Rust 1.88+):
+
+```bash
+cargo install --git https://github.com/nassih-yassine/mcp-security-scanner mcpscan
+```
+
+`cargo install mcpscan`, `cargo binstall`, and Homebrew arrive once the crate is
+on crates.io; Linux arm64 and Alpine need musl builds, which are not published
+yet. On those, build from source.
 
 ## Quickstart
 
