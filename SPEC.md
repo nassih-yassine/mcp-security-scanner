@@ -213,7 +213,7 @@ mcp-security-scanner/
 │       └── cli.rs              # clap surface
 │   └── mcpscan/tests/cli.rs    # assert_cmd against a local fake OSV server
 ├── crates/xtask/src/main.rs    # gen-docs, gen-completions, release checks
-├── data/rules/                 # secret-prefixes.json, scope-maps.json, injection-phrases.json
+│   │   └── data/rules/        # secret-prefixes.json, scope-maps.json, injection-phrases.json
 ├── docs/
 │   ├── rules/<rule-id>.md      # one page per rule, required
 │   ├── RELEASING.md

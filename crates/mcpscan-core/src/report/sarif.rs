@@ -197,7 +197,7 @@ mod tests {
         let text = render(&report(), "0.1.0").unwrap();
         let document: serde_json::Value = serde_json::from_str(&text).unwrap();
         let schema: serde_json::Value =
-            serde_json::from_str(include_str!("../../../../schemas/sarif-2.1.0.json")).unwrap();
+            serde_json::from_str(include_str!("../../schemas/sarif-2.1.0.json")).unwrap();
         let validator = jsonschema::validator_for(&schema).unwrap();
         let errors: Vec<String> = validator
             .iter_errors(&document)

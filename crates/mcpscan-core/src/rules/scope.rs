@@ -17,7 +17,7 @@ struct ProviderMap {
 fn maps() -> &'static BTreeMap<String, ProviderMap> {
     static MAPS: OnceLock<BTreeMap<String, ProviderMap>> = OnceLock::new();
     MAPS.get_or_init(|| {
-        serde_json::from_str(include_str!("../../../../data/rules/scope-maps.json"))
+        serde_json::from_str(include_str!("../../data/rules/scope-maps.json"))
             .expect("scope-maps.json is embedded and valid")
     })
 }

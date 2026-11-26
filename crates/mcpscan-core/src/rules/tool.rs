@@ -15,10 +15,9 @@ struct Phrase {
 fn phrases() -> &'static [(String, Regex)] {
     static PHRASES: OnceLock<Vec<(String, Regex)>> = OnceLock::new();
     PHRASES.get_or_init(|| {
-        let raw: Vec<Phrase> = serde_json::from_str(include_str!(
-            "../../../../data/rules/injection-phrases.json"
-        ))
-        .expect("injection-phrases.json is embedded and valid");
+        let raw: Vec<Phrase> =
+            serde_json::from_str(include_str!("../../data/rules/injection-phrases.json"))
+                .expect("injection-phrases.json is embedded and valid");
         raw.into_iter()
             .filter_map(|p| Regex::new(&p.pattern).ok().map(|re| (p.id, re)))
             .collect()

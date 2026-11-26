@@ -18,7 +18,7 @@ struct Prefix {
 fn prefixes() -> &'static [Prefix] {
     static PREFIXES: OnceLock<Vec<Prefix>> = OnceLock::new();
     PREFIXES.get_or_init(|| {
-        serde_json::from_str(include_str!("../../../../data/rules/secret-prefixes.json"))
+        serde_json::from_str(include_str!("../../data/rules/secret-prefixes.json"))
             .expect("secret-prefixes.json is embedded and valid")
     })
 }
@@ -26,7 +26,7 @@ fn prefixes() -> &'static [Prefix] {
 fn placeholders() -> &'static [String] {
     static PLACEHOLDERS: OnceLock<Vec<String>> = OnceLock::new();
     PLACEHOLDERS.get_or_init(|| {
-        serde_json::from_str(include_str!("../../../../data/rules/placeholders.json"))
+        serde_json::from_str(include_str!("../../data/rules/placeholders.json"))
             .expect("placeholders.json is embedded and valid")
     })
 }
