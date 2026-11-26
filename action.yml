@@ -95,10 +95,20 @@ runs:
             --output "$RUNNER_TEMP/$archive" "$base/$archive"
           curl --fail --silent --show-error --location --proto '=https' \
             --output "$RUNNER_TEMP/sha256.sum" "$base/sha256.sum"
-          ( cd "$RUNNER_TEMP" && grep " $archive\$" sha256.sum | sha256sum --check --strict )
-          tar -xJf "$RUNNER_TEMP/$archive" -C "$bin_dir" --strip-components=0
+          # sha256.sum lines are "<hash> *<name>" (binary marker).
+          ( cd "$RUNNER_TEMP" && grep -F "$archive" sha256.sum | sha256sum --check --strict - )
+          extract="$RUNNER_TEMP/mcpscan-extract"
+          rm -rf "$extract"
+          mkdir -p "$extract"
+          tar -xJf "$RUNNER_TEMP/$archive" -C "$extract"
+          found="$(find "$extract" -type f -name mcpscan | head -1)"
+          if [ -z "$found" ]; then
+            echo "::error::mcpscan binary not found in $archive"
+            exit 1
+          fi
+          cp "$found" "$bin_dir/mcpscan"
         fi
-        chmod +x "$bin_dir/mcpscan" 2>/dev/null || true
+        chmod +x "$bin_dir/mcpscan"
         echo "$bin_dir" >> "$GITHUB_PATH"
 
     - name: Scan
@@ -119,15 +129,15 @@ runs:
         mcpscan "${args[@]}" || status=$?
         if [ "$status" -eq 3 ]; then
           echo "::error::mcpscan could not complete the scan (exit 3)."
-          exit 3
         fi
         grade="$(mcpscan scan "$INPUT_PATH" --format markdown --fail-on none 2>/dev/null \
           | sed -n 's/^## MCP security score: \(.\).*/\1/p' | head -1)"
         echo "score=${grade:-}" >> "$GITHUB_OUTPUT"
-        exit 0
+        # 2 fails the step on findings; the SARIF upload below uses always().
+        exit "$status"
 
     - name: Upload SARIF
-      if: ${{ inputs.upload == 'true' && inputs.format == 'sarif' && inputs.output != '' }}
+      if: ${{ always() && inputs.upload == 'true' && inputs.format == 'sarif' && inputs.output != '' }}
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: ${{ inputs.output }}
