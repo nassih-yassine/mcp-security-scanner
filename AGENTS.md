@@ -71,6 +71,23 @@ cargo run -q -p mcpscan -- scan fixtures/demo        # dogfood
 CI order: `fmt → clippy → docs-check → test (3 OS) → build → dogfood`.
 Keep `--locked` on clippy and test.
 
+## Release traps (cost four failed tags once)
+
+- `cargo-dist` builds with `--profile dist`; without `[profile.dist]` every
+  target fails with "profile `dist` is not defined".
+- Release targets must build **natively** on GitHub runners. `*-musl` and
+  `aarch64-unknown-linux-*` need a cross linker the runners lack; the current
+  set is x86_64-linux-gnu, both macOS, x86_64-windows.
+- Pin workflow actions to the majors cargo-dist 0.34 generates: `attest@v4`,
+  `checkout@v6`, `upload-artifact@v7`, `download-artifact@v8`. Older majors
+  break: v1/v2 of `attest` demand a `predicate`, which cargo-dist does not pass.
+  To see the current defaults, clone to a scratch dir, strip the
+  `[dist.github-action-commits]` table, and run `dist generate --mode ci`.
+- `allow-dirty = ["ci"]` makes `dist generate` refuse to run. Remove it to
+  regenerate, then put it back with the hand edits (permissions, pins).
+- A token-created release never starts other workflows, so publish jobs act on
+  `workflow_run` of `Release` and read the tag from `workflow_run.head_branch`.
+
 ## Traps
 
 - **Tests must not touch the network or the real cache.** Point the OSV base at
