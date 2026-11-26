@@ -15,7 +15,11 @@ permissions:
 
 jobs:
   publish:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Set the repository variable ENABLE_CRATES_IO_PUBLISH=true once the
+    # `crates-io` environment and its token exist.
+    if: >-
+      vars.ENABLE_CRATES_IO_PUBLISH == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     # Required reviewers on this environment gate every publish.
     environment: crates-io

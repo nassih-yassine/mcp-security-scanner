@@ -22,14 +22,17 @@ fn fake_http(body: &'static str) -> Fake {
             match listener.accept() {
                 Ok((mut stream, _)) => {
                     counter.fetch_add(1, Ordering::SeqCst);
-                    let mut buf = [0u8; 4096];
-                    let _ = stream.read(&mut buf);
+                    // Read the whole request (headers + body) before answering.
+                    // Closing while the client is still writing resets the
+                    // connection on Windows.
+                    read_request(&mut stream);
                     let response = format!(
                         "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
                         body.len(),
                         body
                     );
                     let _ = stream.write_all(response.as_bytes());
+                    let _ = stream.flush();
                 }
                 Err(_) => std::thread::sleep(Duration::from_millis(10)),
             }
@@ -38,6 +41,37 @@ fn fake_http(body: &'static str) -> Fake {
     Fake {
         base: format!("http://{addr}"),
         hits,
+    }
+}
+
+fn read_request(stream: &mut std::net::TcpStream) {
+    let mut buf = Vec::new();
+    let mut chunk = [0u8; 1024];
+    let header_end;
+    loop {
+        match stream.read(&mut chunk) {
+            Ok(0) | Err(_) => return,
+            Ok(n) => {
+                buf.extend_from_slice(&chunk[..n]);
+                if let Some(pos) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
+                    header_end = pos + 4;
+                    break;
+                }
+            }
+        }
+    }
+    let headers = String::from_utf8_lossy(&buf[..header_end]).to_ascii_lowercase();
+    let length: usize = headers
+        .lines()
+        .find_map(|line| line.strip_prefix("content-length:"))
+        .and_then(|value| value.trim().parse().ok())
+        .unwrap_or(0);
+    let mut remaining = length.saturating_sub(buf.len() - header_end);
+    while remaining > 0 {
+        match stream.read(&mut chunk) {
+            Ok(0) | Err(_) => return,
+            Ok(n) => remaining = remaining.saturating_sub(n),
+        }
     }
 }
 
