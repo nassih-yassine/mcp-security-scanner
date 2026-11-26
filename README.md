@@ -155,6 +155,10 @@ Report vulnerabilities in the scanner privately; see [`SECURITY.md`](SECURITY.md
 Findings `mcpscan` reports about third-party servers belong to those servers'
 maintainers.
 
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md).
+
 ## License
 
 MIT
