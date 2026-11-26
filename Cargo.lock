@@ -831,7 +831,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "mcpscan"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -843,7 +843,7 @@ dependencies = [
 
 [[package]]
 name = "mcpscan-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "insta",
  "jsonc-parser",
@@ -1934,7 +1934,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mcpscan-core",
  "serde_json",

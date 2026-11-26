@@ -13,7 +13,7 @@ name = "mcpscan"
 path = "src/main.rs"
 
 [dependencies]
-mcpscan-core = { path = "../mcpscan-core", version = "=0.1.0" }
+mcpscan-core = { path = "../mcpscan-core", version = "=0.1.1" }
 clap = { version = "4", features = ["derive"] }
 serde_json.workspace = true
 

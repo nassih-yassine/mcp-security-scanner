@@ -4,6 +4,30 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-11-26
+
+### Added
+
+- Package capability data (`remote-packages.json`): `npx` installs of known
+  servers now carry egress, filesystem and database signals, so capability rules
+  work on real configs instead of only on configs with a `url`.
+- `mcp-secret-to-network` (MEDIUM, opt-in): a networked server handed a literal
+  credential.
+
+### Changed
+
+- `mcp-exfil-path` no longer counts a command or a literal secret as a write
+  leg. It fires on egress plus a real read plus a real write, and now catches a
+  network database server launched read-write.
+- The embedded rule data and the SARIF schema moved inside `mcpscan-core`, so
+  the crate builds from a packaged tarball. 0.1.0 would have failed to
+  `cargo install` from crates.io.
+
+### Fixed
+
+- JSON reports redact `env`, headers, args and URL query values in the `servers`
+  block. Previously only findings were redacted.
+
 ## [0.1.0] - 2026-11-26
 
 First release. The CLI is the product; the hosted layer comes later.
