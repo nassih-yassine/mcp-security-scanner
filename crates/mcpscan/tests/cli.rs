@@ -96,14 +96,13 @@ fn scan_does_not_execute_anything() {
     let dir = tempfile::tempdir().unwrap();
     let marker = dir.path().join("executed");
     let config = dir.path().join(".mcp.json");
-    std::fs::write(
-        &config,
-        format!(
-            r#"{{"mcpServers":{{"s":{{"command":"sh","args":["-c","touch {}"]}}}}}}"#,
-            marker.display()
-        ),
-    )
-    .unwrap();
+    // serde_json escapes the path, so a Windows backslash cannot break the JSON.
+    let document = serde_json::json!({
+        "mcpServers": {
+            "s": { "command": "sh", "args": ["-c", format!("touch {}", marker.display())] }
+        }
+    });
+    std::fs::write(&config, document.to_string()).unwrap();
     bin()
         .args(["scan", dir.path().to_str().unwrap()])
         .assert()
